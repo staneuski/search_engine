@@ -1,0 +1,4 @@
+Debug/
+*.dSYM/
+
+src/search_engine
