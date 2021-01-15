@@ -60,10 +60,8 @@ public:
         }
     }
 
-    void AddDocument(
-        int document_id, const string& document,
-        DocumentStatus status, const vector<int>& ratings
-    ) {
+    void AddDocument(int document_id, const string& document,
+                     DocumentStatus status, const vector<int>& ratings) {
         const vector<string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0 / words.size();
         for (const string& word : words) {
@@ -76,26 +74,12 @@ public:
             });
     }
 
-    /*
-    template <typename Container, typename KeyMapper>
-    void SortBy(Container& container, KeyMapper key_mapper, const bool reverse_sort = false) {
-        sort(container.begin(), container.end(),
-            [key_mapper, reverse_sort](const auto& lhs, const auto& rhs) {
-                if (!reverse_sort) {
-                    return key_mapper(lhs) < key_mapper(rhs);
-                } else {
-                    return key_mapper(lhs) > key_mapper(rhs);
-                }
-            }
-        );
-    }
-    */
-
-    vector<Document> FindTopDocuments(const string& raw_query) const {
+    vector<Document> FindTopDocuments(const string& raw_query,
+                                      DocumentStatus status_to_find = DocumentStatus::ACTUAL) const {
         return FindTopDocuments(
             raw_query,
-            [](int document_id, DocumentStatus status, int rating) {
-                return status == DocumentStatus::ACTUAL;
+            [status_to_find](int document_id, DocumentStatus status, int rating) {
+                return status == status_to_find;
             }
         );
     }
@@ -124,9 +108,8 @@ public:
         return documents_.size();
     }
 
-    tuple<vector<string>, DocumentStatus> MatchDocument(
-        const string& raw_query, int document_id
-    ) const {
+    tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query,
+                                                        int document_id) const {
         const Query query = ParseQuery(raw_query);
         vector<string> matched_words;
         for (const string& word : query.plus_words) {
@@ -264,7 +247,7 @@ private:
     }
 };
 
-// ==================== для примера =========================
+// ===========================================================================
 
 void PrintDocument(const Document& document) {
     cout << "{ "s
@@ -297,24 +280,29 @@ int main() {
     }
 
     cout << "ACTUAL:"s << endl;
-    for (const Document& document : search_server.FindTopDocuments("пушистый ухоженный кот"s,
-            [](int document_id, DocumentStatus status, int rating) { return status == DocumentStatus::ACTUAL; }
-        )
+    for (const Document& document : search_server.FindTopDocuments(
+            "пушистый ухоженный кот"s,
+            DocumentStatus::ACTUAL)
     ) {
         PrintDocument(document);
     }
 
     cout << "Even ids:"s << endl;
-    for (const Document& document : search_server.FindTopDocuments("пушистый ухоженный кот"s,
-            [](int document_id, DocumentStatus status, int rating) { return document_id % 2 == 0; })
+    for (const Document& document : search_server.FindTopDocuments(
+            "пушистый ухоженный кот"s,
+            [](int document_id, DocumentStatus status, int rating) {
+                return document_id % 2 == 0;
+            })
     ) {
         PrintDocument(document);
     }
 
-    cout << "Positive rating:"s << endl;
+    cout << "Positive rating only:"s << endl;
     for (const Document& document : search_server.FindTopDocuments(
             "пушистый ухоженный кот"s,
-            [](int document_id, DocumentStatus status, int rating) { return rating >= 0; })
+            [](int document_id, DocumentStatus status, int rating) {
+                return rating >= 0;
+            })
     ) {
         PrintDocument(document);
     }
