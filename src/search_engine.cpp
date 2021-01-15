@@ -46,7 +46,7 @@ vector<string> SplitIntoWords(const string& text) {
     }
     words.push_back(word);
 
-    return DropElementsByValue(words, ""s);;
+    return DropElementsByValue(words, ""s);
 }
 
 struct Document {
