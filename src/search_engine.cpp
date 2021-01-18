@@ -215,12 +215,10 @@ private:
     }
 
     double ComputeWordInverseDocumentFreq(const string& word) const {
-        if (word_to_document_freqs_.at(word).size()) {
-            return log(static_cast<double>(documents_.size())
-                       /word_to_document_freqs_.at(word).size());
-        } else {
-            return 0;
-        }
+        return (word_to_document_freqs_.at(word).size())
+                ? log(static_cast<double>(documents_.size())
+                      /word_to_document_freqs_.at(word).size())
+                : 0;
     }
 
     template <typename KeyMapper>
