@@ -7,6 +7,12 @@
 #include <utility>
 #include <vector>
 
+//Зачет. Поправил ваи некотрые переносы на другие строки. Повторюсь, лучше использовать запись в одну строку и переносить логическую конструкцию на новую, если она очень длинная.
+//К примеру конструктор принимает 10 параметро, в разных строкуах
+//Конструктор принимает 4 параметра, в одну
+//
+//Так же не стоит одни части логического выражения не переносить, а другие переносить, к примеру, как вы оставили в цикле.
+
 using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
@@ -116,8 +122,8 @@ public:
     vector<Document> FindTopDocuments(
                                         const string& raw_query,
                                         DocumentStatus status_to_find = DocumentStatus::ACTUAL
-                                     )
-    const {
+                                     ) const 
+    {
         return FindTopDocuments(
             raw_query,
             [status_to_find](int document_id, DocumentStatus status, int rating) {
@@ -162,6 +168,20 @@ private:
     map<string, map<int, double>> word_to_document_freqs_;
     map<int, DocumentData> documents_;
 
+    //Статические методы тоже нужно группировать отдельно от нестатических. Лучше их располагать в начале блока, перед нестатическими методами.
+    static int ComputeAverageRating(const vector<int>& ratings) {
+        if (ratings.size()) {
+            int rating_sum = 0;
+            for (const int rating : ratings) {
+                rating_sum += rating;
+            }
+            return rating_sum / static_cast<int>(ratings.size());
+        }
+        else {
+            return 0;
+        }
+    }
+
     bool IsStopWord(const string& word) const {
         return stop_words_.count(word);
     }
@@ -174,18 +194,6 @@ private:
             }
         }
         return words;
-    }
-
-    static int ComputeAverageRating(const vector<int>& ratings) {
-        if (ratings.size()) {
-            int rating_sum = 0;
-            for (const int rating : ratings) {
-                rating_sum += rating;
-            }
-            return rating_sum/static_cast<int>(ratings.size());
-        } else {
-            return 0;
-        }
     }
 
     QueryWord ParseQueryWord(string text) const {
@@ -216,8 +224,8 @@ private:
 
     double ComputeWordInverseDocumentFreq(const string& word) const {
         return (word_to_document_freqs_.at(word).size())
-                ? log(static_cast<double>(documents_.size())
-                      /word_to_document_freqs_.at(word).size())
+            //В одну строчку лучше читается.
+                ? log(static_cast<double>(documents_.size())/word_to_document_freqs_.at(word).size())
                 : 0;
     }
 
@@ -295,8 +303,7 @@ int main() {
     }
 
     cout << "ACTUAL:"s << endl;
-    for (const Document& document : search_server.FindTopDocuments("пушистый ухоженный кот -белый"s,
-                                                                   DocumentStatus::ACTUAL)) {
+    for (const Document& document : search_server.FindTopDocuments("пушистый ухоженный кот -белый"s, DocumentStatus::ACTUAL)) {
         PrintDocument(document);
     }
 
@@ -313,8 +320,7 @@ int main() {
         return rating > 0;
     };
     cout << "Positive rating only:"s << endl;
-    for (const Document& document : search_server.FindTopDocuments("пушистый  ухоженный кот"s,
-                                                                   is_rating_positive)) {
+    for (const Document& document : search_server.FindTopDocuments("пушистый  ухоженный кот"s, is_rating_positive)) {
         PrintDocument(document);
     }
 
