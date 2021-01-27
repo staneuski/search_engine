@@ -7,12 +7,6 @@
 #include <utility>
 #include <vector>
 
-//Зачет. Поправил ваи некотрые переносы на другие строки. Повторюсь, лучше использовать запись в одну строку и переносить логическую конструкцию на новую, если она очень длинная.
-//К примеру конструктор принимает 10 параметро, в разных строкуах
-//Конструктор принимает 4 параметра, в одну
-//
-//Так же не стоит одни части логического выражения не переносить, а другие переносить, к примеру, как вы оставили в цикле.
-
 using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
@@ -47,7 +41,6 @@ vector<string> SplitIntoWords(const string& text) {
 
     words.push_back(word);
 
-    // Drop empty words if exist
     words.erase(
         remove_if(words.begin(), words.end(), [](const string& word) { return word == ""s; }),
         words.end()
@@ -122,7 +115,7 @@ public:
     vector<Document> FindTopDocuments(
                                         const string& raw_query,
                                         DocumentStatus status_to_find = DocumentStatus::ACTUAL
-                                     ) const 
+                                     ) const
     {
         return FindTopDocuments(
             raw_query,
@@ -168,7 +161,6 @@ private:
     map<string, map<int, double>> word_to_document_freqs_;
     map<int, DocumentData> documents_;
 
-    //Статические методы тоже нужно группировать отдельно от нестатических. Лучше их располагать в начале блока, перед нестатическими методами.
     static int ComputeAverageRating(const vector<int>& ratings) {
         if (ratings.size()) {
             int rating_sum = 0;
@@ -224,7 +216,6 @@ private:
 
     double ComputeWordInverseDocumentFreq(const string& word) const {
         return (word_to_document_freqs_.at(word).size())
-            //В одну строчку лучше читается.
                 ? log(static_cast<double>(documents_.size())/word_to_document_freqs_.at(word).size())
                 : 0;
     }
@@ -311,8 +302,7 @@ int main() {
         return document_id % 2 == 0;
     };
     cout << "Even ids:"s << endl;
-    for (const Document& document : search_server.FindTopDocuments("пушистый ухоженный кот"s,
-                                                                   is_id_even)) {
+    for (const Document& document : search_server.FindTopDocuments("пушистый ухоженный кот"s, is_id_even)) {
         PrintDocument(document);
     }
 
