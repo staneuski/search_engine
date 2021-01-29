@@ -215,7 +215,7 @@ private:
                 continue;
             }
             const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
-            for (const auto [document_id, term_freq] : word_to_document_freqs_.at(word)) {
+            for (const auto& [document_id, term_freq] : word_to_document_freqs_.at(word)) {
                 if (key_mapper(document_id,
                                documents_.at(document_id).status,
                                documents_.at(document_id).rating)
@@ -230,13 +230,13 @@ private:
             if (word_to_document_freqs_.count(word) == 0) {
                 continue;
             }
-            for (const auto [document_id, _] : word_to_document_freqs_.at(word)) {
+            for (const auto& [document_id, _] : word_to_document_freqs_.at(word)) {
                 document_to_relevance.erase(document_id);
             }
         }
 
         vector<Document> matched_documents;
-        for (const auto [document_id, relevance] : document_to_relevance) {
+        for (const auto& [document_id, relevance] : document_to_relevance) {
             matched_documents.push_back({
                 document_id,
                 relevance,
