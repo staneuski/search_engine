@@ -247,6 +247,7 @@ private:
     }
 };
 
+
 /* ---------------------------- Input & Output ----------------------------- */
 
 string ReadLine() {
@@ -295,6 +296,7 @@ ostream& operator<<(ostream& out, const vector<Document>& documents) {
     }
     return Print(out, docs_data, "\n"s);
 }
+
 
 /* ------------------------ Assert Implementations ------------------------- */
 
@@ -349,7 +351,7 @@ void RunTestImpl(F test, const string& test_name) {
 
 /* ------------------------ SearchServer unit tests ------------------------ */
 
-SearchServer AddDocuments() {
+SearchServer CreateServerWithDocuments() {
     SearchServer server;
     server.AddDocument(100, "white stily cat with ball"s, DocumentStatus::ACTUAL, {8, -3});
     server.AddDocument(101, "cat with thin tail"s, DocumentStatus::ACTUAL, {7, 2, 7});
@@ -360,19 +362,19 @@ SearchServer AddDocuments() {
 }
 
 void TestAddDocument() {
-    const vector<Document> found_docs = AddDocuments().FindTopDocuments("sunglasses"s);
+    const vector<Document> found_docs = CreateServerWithDocuments().FindTopDocuments("sunglasses"s);
     ASSERT_HINT(!found_docs.empty(), "AddDocument() must add documents"s);
 }
 
 void TestExcludeStopWordsFromAddedDocumentContent() {
     {
-        const vector<Document> found_docs = AddDocuments().FindTopDocuments("dog"s);
+        const vector<Document> found_docs = CreateServerWithDocuments().FindTopDocuments("dog"s);
         const string hint = "FindTopDocuments() must find matched document"s;
         ASSERT_EQUAL_HINT(found_docs.size(), 1, hint);
         ASSERT_EQUAL_HINT(found_docs[0].id, 102, hint);
     }
     {
-        SearchServer server = AddDocuments();
+        SearchServer server = CreateServerWithDocuments();
         server.SetStopWords("sunglasses"s);
         ASSERT_HINT(
             server.FindTopDocuments("sunglasses"s).empty(),
@@ -382,13 +384,13 @@ void TestExcludeStopWordsFromAddedDocumentContent() {
 }
 
 void TestExcludeDocumentsWithMinusWords() {
-    const SearchServer server = AddDocuments();
+    const SearchServer server = CreateServerWithDocuments();
     ASSERT(!server.FindTopDocuments("sunglasses"s).empty());
     ASSERT_HINT(server.FindTopDocuments("-sunglasses"s).empty(), "document with minus word must be excluded from result"s);
 }
 
 void TestMatchDocument() {
-    const SearchServer server = AddDocuments();
+    const SearchServer server = CreateServerWithDocuments();
     {
         const auto& [matched_words, _] = server.MatchDocument("white cat without tail"s, 100);
         const string hint = "MatchDocument() must return all words from the search query that are present in the document";
@@ -412,7 +414,7 @@ void TestMatchDocument() {
 void TestSorting() {
     vector<int> expected_ids = {101, 100, 102};
     vector<int> found_ids;
-    for (const Document& doc : AddDocuments().FindTopDocuments("cat with tail"s)) {
+    for (const Document& doc : CreateServerWithDocuments().FindTopDocuments("cat with tail"s)) {
         found_ids.push_back(doc.id);
     }
     ASSERT_EQUAL_HINT(expected_ids, found_ids, "FindTopDocuments() must sort found documents by decrease of relevance");
@@ -426,7 +428,7 @@ void TestComputeAverageRating() {
         ASSERT_EQUAL_HINT(found_docs[0].rating, 0, "ComputeAverageRating() must return zero rating if there is no ratings"s);
     }
     {
-        const vector<Document> found_docs = AddDocuments().FindTopDocuments("dog with sunglasses"s);
+        const vector<Document> found_docs = CreateServerWithDocuments().FindTopDocuments("dog with sunglasses"s);
         ASSERT_EQUAL_HINT(found_docs[0].rating, -1, "ComputeAverageRating() must return an arithmetic mean of the document's ratings"s);
     }
 }
@@ -435,14 +437,14 @@ void TestUserPredicates() {
     auto is_id_even = [](int id, DocumentStatus status, int rating) {
         return id % 2 == 0;
     };
-    const vector<Document> found_docs = AddDocuments().FindTopDocuments("with"s, is_id_even);
+    const vector<Document> found_docs = CreateServerWithDocuments().FindTopDocuments("with"s, is_id_even);
     for (const Document& doc : found_docs) {
         ASSERT_HINT(doc.id % 2 == 0, "FindTopDocuments() must work with user set predicate"s);
     }
 }
 
 void TestFindByStatus() {
-    const vector<Document> found_docs = AddDocuments().FindTopDocuments("snake"s, DocumentStatus::IRRELEVANT);
+    const vector<Document> found_docs = CreateServerWithDocuments().FindTopDocuments("snake"s, DocumentStatus::IRRELEVANT);
     ASSERT_EQUAL_HINT(found_docs[0].id, 103, "FindTopDocuments() must work with user set document status"s);
 }
 
@@ -453,7 +455,7 @@ void TestRelevance() {
         {102, 1.0/3.0*log(5.0/3.0)}
     };
 
-    for (const auto& doc : AddDocuments().FindTopDocuments("cat with ball"s)) {
+    for (const auto& doc : CreateServerWithDocuments().FindTopDocuments("cat with ball"s)) {
         ASSERT_EQUAL_HINT(doc.relevance, id_to_relevance.at(doc.id), "FindAllDocuments() must calculate relevance using the TF-ITF method"s);
     }
 }
@@ -474,7 +476,7 @@ void TestSearchServer() {
 
 int main() {
     TestSearchServer();
-    // cout << AddDocuments().FindTopDocuments("cat with"s) << endl;
+    // cout << CreateServerWithDocuments().FindTopDocuments("cat with"s) << endl;
 
     return 0;
 }
