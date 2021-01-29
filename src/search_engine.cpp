@@ -71,13 +71,6 @@ public:
         );
     }
 
-    bool IsContainWord(const string& word) const {
-        return word_to_document_freqs_.count(word);
-    }
-    bool IsWordContainId(const string& word, const int& document_id) const {
-        return word_to_document_freqs_.at(word).count(document_id);
-    }
-
     tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query, int document_id) const {
         const Query query = ParseQuery(raw_query);
         vector<string> matched_words;
@@ -164,6 +157,12 @@ private:
 
     bool IsStopWord(const string& word) const {
         return stop_words_.count(word);
+    }
+    bool IsContainWord(const string& word) const {
+        return word_to_document_freqs_.count(word);
+    }
+    bool IsWordContainId(const string& word, const int& document_id) const {
+        return word_to_document_freqs_.at(word).count(document_id);
     }
 
     vector<string> SplitIntoWordsNoStop(const string& text) const {
@@ -361,7 +360,8 @@ SearchServer AddDocuments() {
 }
 
 void TestAddDocument() {
-    ASSERT_HINT(AddDocuments().IsWordContainId("dog", 102), "AddDocument() must add documents"s);
+    const vector<Document> found_docs = AddDocuments().FindTopDocuments("sunglasses"s);
+    ASSERT_HINT(!found_docs.empty(), "AddDocument() must add documents"s);
 }
 
 void TestExcludeStopWordsFromAddedDocumentContent() {
@@ -474,7 +474,7 @@ void TestSearchServer() {
 
 int main() {
     TestSearchServer();
-    cout << AddDocuments().FindTopDocuments("cat with ball"s) << endl;
+    // cout << AddDocuments().FindTopDocuments("cat with"s) << endl;
 
     return 0;
 }
