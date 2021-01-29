@@ -11,18 +11,7 @@ using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
-string ReadLine() {
-    string s;
-    getline(cin, s);
-    return s;
-}
-
-int ReadLineWithNumber() {
-    int result;
-    cin >> result;
-    ReadLine();
-    return result;
-}
+/* -------------------------- SearchServer class --------------------------- */
 
 vector<string> SplitIntoWords(const string& text) {
     vector<string> words;
@@ -113,9 +102,9 @@ public:
     }
 
     vector<Document> FindTopDocuments(
-                                        const string& raw_query,
-                                        DocumentStatus status_to_find = DocumentStatus::ACTUAL
-                                     ) const
+        const string& raw_query,
+        DocumentStatus status_to_find = DocumentStatus::ACTUAL
+    ) const
     {
         return FindTopDocuments(
             raw_query,
@@ -220,8 +209,7 @@ private:
     }
 
     template <typename KeyMapper>
-    vector<Document> FindAllDocuments(const Query& query,
-                                      KeyMapper key_mapper) const {
+    vector<Document> FindAllDocuments(const Query& query, KeyMapper key_mapper) const {
         map<int, double> document_to_relevance;
         for (const string& word : query.plus_words) {
             if (word_to_document_freqs_.count(word) == 0) {
@@ -260,150 +248,233 @@ private:
     }
 };
 
-// ------------------------- SearchServer unit tests -------------------------
+/* ---------------------------- Input & Output ----------------------------- */
+
+string ReadLine() {
+    string s;
+    getline(cin, s);
+    return s;
+}
+
+int ReadLineWithNumber() {
+    int result;
+    cin >> result;
+    ReadLine();
+    return result;
+}
+
+template <typename T>
+ostream& Print(ostream& out, const T& container, const string& delimeter = ", "s) {
+    bool is_first = true;
+    for (const auto& element : container) {
+        if (is_first) {
+            out << element;
+            is_first = false;
+        } else {
+            out << delimeter << element;
+        }
+    }
+    return out;
+}
+
+template <typename T>
+ostream& operator<<(ostream& out, const vector<T>& container) {
+    out << "["s;
+    Print(out, container);
+    return out << "]"s;
+}
+
+ostream& operator<<(ostream& out, const vector<Document>& documents) {
+    vector<string> docs_data;
+    for (const auto& doc : documents) {
+        docs_data.push_back(
+            "{ document_id = "s + to_string(doc.id) 
+          + ", relevance = "s + to_string(doc.relevance)
+          + ", rating = "s + to_string(doc.rating)
+          + " }"s
+        );
+    }
+    return Print(out, docs_data, "\n"s);
+}
+
+/* ------------------------ Assert Implementations ------------------------- */
+
+void AssertImpl(
+        bool is_true, const string& expr,
+        const string& file, const string& func, unsigned line,
+        const string& hint
+    )
+    {
+    if (!is_true) {
+        cerr << file << "("s << line << "): "s << func << ": "s;
+        cerr << "ASSERT("s << expr << ") failed."s;
+        if (!hint.empty()) {
+            cerr << " Hint: "s << hint;
+        }
+        cerr << endl;
+        abort();
+    }
+}
+#define ASSERT(expr) AssertImpl(expr, #expr, __FILE__, __FUNCTION__, __LINE__, ""s)
+#define ASSERT_HINT(expr, hint) AssertImpl(expr, #expr, __FILE__, __FUNCTION__, __LINE__, (hint))
+
+template <typename T, typename U>
+void AssertEqualImpl(
+        const T& t, const U& u, const string& t_str, const string& u_str,
+        const string& file, const string& func, unsigned line,
+        const string& hint
+    )
+    {
+    if (t != u) {
+        cerr << boolalpha;
+        cerr << file << "("s << line << "): "s << func << ": "s;
+        cerr << "ASSERT_EQUAL("s << t_str << ", "s << u_str << ") failed: "s;
+        cerr << t << " != "s << u << "."s;
+        if (!hint.empty()) {
+            cerr << " Hint: "s << hint;
+        }
+        cerr << endl;
+        abort();
+    }
+}
+#define ASSERT_EQUAL(a, b) AssertEqualImpl((a), (b), #a, #b, __FILE__, __FUNCTION__, __LINE__, ""s)
+#define ASSERT_EQUAL_HINT(a, b, hint) AssertEqualImpl((a), (b), #a, #b, __FILE__, __FUNCTION__, __LINE__, (hint))
+
+template <typename F>
+void RunTestImpl(F test, const string& test_name) {
+    test();
+    cerr << test_name << " OK" << endl;
+}
+#define RUN_TEST(test) RunTestImpl((test), #test)
+
+
+/* ------------------------ SearchServer unit tests ------------------------ */
 
 SearchServer AddDocuments() {
     SearchServer server;
-    server.AddDocument(154313, "white stily cat with ball"s, DocumentStatus::ACTUAL, {8, -3});
-    server.AddDocument(564, "cat with thin tail"s, DocumentStatus::ACTUAL, {7, 2, 7});
-    server.AddDocument(36, "dog with sunglasses"s, DocumentStatus::ACTUAL, {5, -12, 2, 1});
-    server.AddDocument(830, "snake without tooth"s, DocumentStatus::IRRELEVANT, {-6, -3, 0, -10});
-    server.AddDocument(659, "long fat snake"s, DocumentStatus::BANNED, {5, -1, 3, -3});
+    server.AddDocument(100, "white stily cat with ball"s, DocumentStatus::ACTUAL, {8, -3});
+    server.AddDocument(101, "cat with thin tail"s, DocumentStatus::ACTUAL, {7, 2, 7});
+    server.AddDocument(102, "dog with sunglasses"s, DocumentStatus::ACTUAL, {5, -12, 2, 1});
+    server.AddDocument(103, "snake without tooth"s, DocumentStatus::IRRELEVANT, {-6, -3, 0, -10});
+    server.AddDocument(104, "long fat snake"s, DocumentStatus::BANNED, {5, -1, 3, -3});
     return server;
 }
 
 void TestAddDocument() {
-    SearchServer server;
-    server.AddDocument(42, "cat in the city"s, DocumentStatus::ACTUAL, {-1, 2, 0});
-    server.AddDocument(911, "chilling dog in the city"s, DocumentStatus::ACTUAL, {3, 2, 5});
-    const vector<Document> found_docs = server.FindTopDocuments("cat in the city"s);
-    assert(found_docs.size() == 2);
-    assert(found_docs[0].id == 42);
+    ASSERT_HINT(AddDocuments().IsWordContainId("dog", 102), "AddDocument() must add documents"s);
 }
 
 void TestExcludeStopWordsFromAddedDocumentContent() {
-    const int doc_id = 42;
-    const string content = "cat in the city"s;
-    const vector<int> ratings = {1, 2, 3};
     {
-        SearchServer server;
-        server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
-        const auto found_docs = server.FindTopDocuments("in"s);
-        assert(found_docs.size() == 1);
-        const Document& doc0 = found_docs[0];
-        assert(doc0.id == doc_id);
+        const vector<Document> found_docs = AddDocuments().FindTopDocuments("dog"s);
+        const string hint = "FindTopDocuments() must find matched document"s;
+        ASSERT_EQUAL_HINT(found_docs.size(), 1, hint);
+        ASSERT_EQUAL_HINT(found_docs[0].id, 102, hint);
     }
-
     {
-        SearchServer server;
-        server.SetStopWords("in the"s);
-        server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
-        assert(server.FindTopDocuments("in"s).empty());
+        SearchServer server = AddDocuments();
+        server.SetStopWords("sunglasses"s);
+        ASSERT_HINT(
+            server.FindTopDocuments("sunglasses"s).empty(),
+            "SetStopWords() must exclude stop words from document content"s
+        );
     }
 }
 
 void TestExcludeDocumentsWithMinusWords() {
-    SearchServer server;
-    server.AddDocument(42, "cat in the city"s, DocumentStatus::ACTUAL, {-1, 2, 0});
-    assert(server.FindTopDocuments("in"s).empty() == 0);
-    assert(server.FindTopDocuments("-in"s).empty());
+    const SearchServer server = AddDocuments();
+    ASSERT(!server.FindTopDocuments("sunglasses"s).empty());
+    ASSERT_HINT(server.FindTopDocuments("-sunglasses"s).empty(), "document with minus word must be excluded from result"s);
 }
 
 void TestMatchDocument() {
-    SearchServer server = AddDocuments();
+    const SearchServer server = AddDocuments();
     {
-        const auto& [matched_words, _] = server.MatchDocument("white cat without tail"s, 154313);
-        assert(count(matched_words.begin(), matched_words.end(), "white"s));
-        assert(count(matched_words.begin(), matched_words.end(), "cat"s));
-        assert(!count(matched_words.begin(), matched_words.end(), "tail"s));
+        const auto& [matched_words, _] = server.MatchDocument("white cat without tail"s, 100);
+        const string hint = "MatchDocument() must return all words from the search query that are present in the document";
+        ASSERT_HINT(count(matched_words.begin(), matched_words.end(), "white"s), hint);
+        ASSERT_HINT(count(matched_words.begin(), matched_words.end(), "cat"s), hint);
+        ASSERT_HINT(
+            !count(matched_words.begin(), matched_words.end(), "tail"s),
+            "MatchDocument() mustn't return word from the search query that are present in the document"
+        );
     }
     {
-        const auto& [matched_words, _] = server.MatchDocument("cat with thin -tail"s, 564);
-        assert(matched_words.empty());
+        const auto& [matched_words, _] = server.MatchDocument("cat with thin -tail"s, 101);
+        ASSERT_HINT(matched_words.empty(), "MatchDocument() must return an empty vector if matching at least one negative keyword"s);
     }
     {
-        const auto& [matched_words, _] = server.MatchDocument("cat"s, 36);
-        assert(matched_words.empty());
+        const auto& [matched_words, _] = server.MatchDocument("cat"s, 102);
+        ASSERT_HINT(matched_words.empty(), "MatchDocument() mustn't return non empty vector if there is none matching words"s);
     }
 }
 
 void TestSorting() {
-    SearchServer server = AddDocuments();
-    vector<int> expected_ids = {564, 154313, 36};
+    vector<int> expected_ids = {101, 100, 102};
     vector<int> found_ids;
-    for (const Document& doc : server.FindTopDocuments("cat with tail"s)) {
+    for (const Document& doc : AddDocuments().FindTopDocuments("cat with tail"s)) {
         found_ids.push_back(doc.id);
     }
-    assert(equal(expected_ids.begin(), expected_ids.end(), found_ids.begin()));
+    ASSERT_EQUAL_HINT(expected_ids, found_ids, "FindTopDocuments() must sort found documents by decrease of relevance");
 }
 
 void TestComputeAverageRating() {
     {
         SearchServer server;
-        server.AddDocument(36, "dog with sunglasses"s, DocumentStatus::ACTUAL, {});
+        server.AddDocument(102, "dog with sunglasses"s, DocumentStatus::ACTUAL, {});
         const vector<Document> found_docs = server.FindTopDocuments("dog with sunglasses"s);
-        assert(found_docs[0].rating == 0);
+        ASSERT_EQUAL_HINT(found_docs[0].rating, 0, "ComputeAverageRating() must return zero rating if there is no ratings"s);
     }
     {
-        SearchServer server;
-        server.AddDocument(36, "dog with sunglasses"s, DocumentStatus::ACTUAL, {5, -12, 2, 1});
-        const vector<Document> found_docs = server.FindTopDocuments("dog with sunglasses"s);
-        assert(found_docs[0].rating == -1);
+        const vector<Document> found_docs = AddDocuments().FindTopDocuments("dog with sunglasses"s);
+        ASSERT_EQUAL_HINT(found_docs[0].rating, -1, "ComputeAverageRating() must return an arithmetic mean of the document's ratings"s);
     }
 }
 
 void TestUserPredicates() {
-    SearchServer server = AddDocuments();
     auto is_id_even = [](int id, DocumentStatus status, int rating) {
         return id % 2 == 0;
     };
-    const vector<Document>& found_docs = server.FindTopDocuments("with"s, is_id_even);
+    const vector<Document> found_docs = AddDocuments().FindTopDocuments("with"s, is_id_even);
     for (const Document& doc : found_docs) {
-        assert(doc.id % 2 == 0);
+        ASSERT_HINT(doc.id % 2 == 0, "FindTopDocuments() must work with user set predicate"s);
     }
 }
 
 void TestFindByStatus() {
-    SearchServer server = AddDocuments();
-    const vector<Document>& found_docs = server.FindTopDocuments("snake"s, DocumentStatus::IRRELEVANT);
-    assert(found_docs[0].id == 830);
+    const vector<Document> found_docs = AddDocuments().FindTopDocuments("snake"s, DocumentStatus::IRRELEVANT);
+    ASSERT_EQUAL_HINT(found_docs[0].id, 103, "FindTopDocuments() must work with user set document status"s);
 }
 
 void TestRelevance() {
-    SearchServer server = AddDocuments();
-    vector<int> expected_relevances = {607310, 356779, 170275};
-    vector<int> found_relevances;
-    for (const Document& doc : server.FindTopDocuments("cat with ball"s)) {
-        found_relevances.push_back(doc.relevance*1e6);
+    map<int, double> id_to_relevance = {
+        {100, 0.2*(log(5.0/2.0) + log(5.0/3.0) + log(5.0/1.0))},
+        {101, 0.25*(log(5.0/2.0) + log(5.0/3.0))},
+        {102, 1.0/3.0*log(5.0/3.0)}
+    };
+
+    for (const auto& doc : AddDocuments().FindTopDocuments("cat with ball"s)) {
+        ASSERT_EQUAL_HINT(doc.relevance, id_to_relevance.at(doc.id), "FindAllDocuments() must calculate relevance using the TF-ITF method"s);
     }
-    assert(equal(expected_relevances.begin(), expected_relevances.end(), found_relevances.begin()));
 }
 
 void TestSearchServer() {
-    TestAddDocument();
-    TestExcludeStopWordsFromAddedDocumentContent();
-    TestExcludeDocumentsWithMinusWords();
-    TestMatchDocument();
-    TestSorting();
-    TestComputeAverageRating();
-    TestUserPredicates();
-    TestFindByStatus();
-    TestRelevance();
+    RUN_TEST(TestAddDocument);
+    RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
+    RUN_TEST(TestExcludeDocumentsWithMinusWords);
+    RUN_TEST(TestMatchDocument);
+    RUN_TEST(TestSorting);
+    RUN_TEST(TestComputeAverageRating);
+    RUN_TEST(TestUserPredicates);
+    RUN_TEST(TestFindByStatus);
+    RUN_TEST(TestRelevance);
 }
 
-// ---------------------------------------------------------------------------
-
-void PrintDocument(const Document& document) {
-    cout << "{ "s
-         << "document_id = "s << document.id << ", "s
-         << "relevance = "s << document.relevance << ", "s
-         << "rating = "s << document.rating
-         << " }"s << endl;
-}
+/* ------------------------------------------------------------------------- */
 
 int main() {
     TestSearchServer();
-    cout << "Search server testing finished"s << endl;
+    cout << AddDocuments().FindTopDocuments("cat with ball"s) << endl;
 
     return 0;
 }
