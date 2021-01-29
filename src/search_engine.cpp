@@ -11,7 +11,7 @@ using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
-/* -------------------------- SearchServer class --------------------------- */
+/* ----------------------------- Search Server ----------------------------- */
 
 vector<string> SplitIntoWords(const string& text) {
     vector<string> words;
@@ -143,18 +143,6 @@ private:
     map<string, map<int, double>> word_to_document_freqs_;
     map<int, DocumentData> documents_;
 
-    static int ComputeAverageRating(const vector<int>& ratings) {
-        if (ratings.size()) {
-            int rating_sum = 0;
-            for (const int rating : ratings) {
-                rating_sum += rating;
-            }
-            return rating_sum / static_cast<int>(ratings.size());
-        } else {
-            return 0;
-        }
-    }
-
     bool IsStopWord(const string& word) const {
         return stop_words_.count(word);
     }
@@ -173,6 +161,18 @@ private:
             }
         }
         return words;
+    }
+
+    static int ComputeAverageRating(const vector<int>& ratings) {
+        if (ratings.size()) {
+            int rating_sum = 0;
+            for (const int rating : ratings) {
+                rating_sum += rating;
+            }
+            return rating_sum / static_cast<int>(ratings.size());
+        } else {
+            return 0;
+        }
     }
 
     QueryWord ParseQueryWord(string text) const {
@@ -454,7 +454,6 @@ void TestRelevance() {
         {101, 0.25*(log(5.0/2.0) + log(5.0/3.0))},
         {102, 1.0/3.0*log(5.0/3.0)}
     };
-
     for (const auto& doc : CreateServerWithDocuments().FindTopDocuments("cat with ball"s)) {
         ASSERT_EQUAL_HINT(doc.relevance, id_to_relevance.at(doc.id), "FindAllDocuments() must calculate relevance using the TF-ITF method"s);
     }
