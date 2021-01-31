@@ -7,9 +7,6 @@
 #include <utility>
 #include <vector>
 
-//Работа не сложная. Написана хорошо. Поправьте замечания и будет зачет. Если есть спорные или обычные вопросы, то пишите в Slack
-//Пока не зачет
-
 using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
@@ -266,6 +263,12 @@ int ReadLineWithNumber() {
     return result;
 }
 
+template <typename T, typename S> 
+ostream& operator<<(ostream& out, const pair<T, S>& p) {
+    out << p.first << ": "s << p.second;
+    return out;
+}
+
 template <typename T>
 ostream& Print(ostream& out, const T& container, const string& delimeter = ", "s) {
     bool is_first = true;
@@ -285,6 +288,20 @@ ostream& operator<<(ostream& out, const vector<T>& container) {
     out << "["s;
     Print(out, container);
     return out << "]"s;
+}
+
+template <typename T>
+ostream& operator<<(ostream& out, const set<T>& container) {
+    out << "{"s;
+    Print(out, container);
+    return out << "}"s;
+}
+
+template <typename Key, typename Value>
+ostream& operator<<(ostream& out, const map<Key, Value>& container) {
+    out << "{"s;
+    Print(out, container);
+    return out << "}"s;
 }
 
 ostream& operator<<(ostream& out, const vector<Document>& documents) {
@@ -354,7 +371,6 @@ void RunTestImpl(F test, const string& test_name) {
 
 /* ------------------------ SearchServer unit tests ------------------------ */
 
-//Вы первый студент, который добавил функцию инициализации. Это правильный подход. Я полагаю, что у вас есть опты, т.к. новички обычно так не делают.
 SearchServer CreateServerWithDocuments() {
     SearchServer server;
     server.AddDocument(100, "white stily cat with ball"s, DocumentStatus::ACTUAL, {8, -3});
@@ -365,139 +381,118 @@ SearchServer CreateServerWithDocuments() {
     return server;
 }
 
-// Хорошей отправной точкой для Unit тестов служат правила из книги 
-// Рой Орушев Искусство автономного тестировани
-//	Основные правила такие:
-//		1. Название тестовой функции должно включать имя тестируемой функции, сценарий в рамках которого тестируется функция, поведение ожидаемое в данном сценарии
-//		2. Отделяйте утверждения от действий пустой строкой.
-//		3. Тестирование только одного результата
-//		4. Устранение дублирования
-//
-// На пункт 1 я не буду особо обращать внимания, а по остальным пунктам оставлю коментарии.
-
 void TestAddDocument() {
-    const vector<Document> found_docs = CreateServerWithDocuments().FindTopDocuments("sunglasses"s);
-    ASSERT_HINT(!found_docs.empty(), "AddDocument() must add documents"s);
+    const vector<Document> found_docs = CreateServerWithDocuments().FindTopDocuments("sunglasses");
+
+    ASSERT_HINT(!found_docs.empty(), "AddDocument() must add documents");
 }
 
-//Пункт 3. Вы тестируете несколько результатов. Лучше разделить на две функции
-void TestExcludeStopWordsFromAddedDocumentContent() {
-    {
-        const vector<Document> found_docs = CreateServerWithDocuments().FindTopDocuments("dog"s);
-        const string hint = "FindTopDocuments() must find matched document"s;
-        //Пункт 2.
-        ASSERT_EQUAL_HINT(found_docs.size(), 1, hint);
-        ASSERT_EQUAL_HINT(found_docs[0].id, 102, hint);
-    }
-    {
-        SearchServer server = CreateServerWithDocuments();
-        server.SetStopWords("sunglasses"s);
-        //Пункт 2.
-        ASSERT_HINT(
-            server.FindTopDocuments("sunglasses"s).empty(),
-            "SetStopWords() must exclude stop words from document content"s
-        );
-    }
+void TestSetStopWords() {
+    SearchServer server = CreateServerWithDocuments();
+
+    ASSERT(!server.FindTopDocuments("sunglasses").empty());
+
+    server.SetStopWords("sunglasses");
+
+    ASSERT_HINT(server.FindTopDocuments("sunglasses").empty(), "SetStopWords() must exclude stop words from document content"
+);
 }
 
-void TestExcludeDocumentsWithMinusWords() {
+void TestParseQuery() {
     const SearchServer server = CreateServerWithDocuments();
+
     ASSERT(!server.FindTopDocuments("sunglasses"s).empty());
-    ASSERT_HINT(server.FindTopDocuments("-sunglasses"s).empty(), "document with minus word must be excluded from result"s);
+    ASSERT_HINT(server.FindTopDocuments("-sunglasses"s).empty(), "ParseQuery() must exclude a document with a minus word from the result");
 }
 
-//Пункт 3. Вы тестируете несколько результатов. Лучше разделить на три функции
 void TestMatchDocument() {
-    const SearchServer server = CreateServerWithDocuments();
-    {
-        const auto& [matched_words, _] = server.MatchDocument("white cat without tail"s, 100);
-        const string hint = "MatchDocument() must return all words from the search query that are present in the document";
-        //Пункт 2.
-        ASSERT_HINT(count(matched_words.begin(), matched_words.end(), "white"s), hint);
-        ASSERT_HINT(count(matched_words.begin(), matched_words.end(), "cat"s), hint);
-        ASSERT_HINT(
-            !count(matched_words.begin(), matched_words.end(), "tail"s),
-            "MatchDocument() mustn't return word from the search query that are present in the document"
-        );
-    }
-    {
-        const auto& [matched_words, _] = server.MatchDocument("cat with thin -tail"s, 101);
-        ASSERT_HINT(matched_words.empty(), "MatchDocument() must return an empty vector if matching at least one negative keyword"s);
-    }
-    {
-        const auto& [matched_words, _] = server.MatchDocument("cat"s, 102);
-        ASSERT_HINT(matched_words.empty(), "MatchDocument() mustn't return non empty vector if there is none matching words"s);
-    }
+    const auto& [matched_words, _] = CreateServerWithDocuments().MatchDocument("white cat without tail", 100);
+    const string hint = "MatchDocument() must return all words from the search query that are present in the document";
+
+    ASSERT_HINT(count(matched_words.begin(), matched_words.end(), "white"), hint);
+    ASSERT_HINT(count(matched_words.begin(), matched_words.end(), "cat"), hint);
+    ASSERT_HINT(
+        !count(matched_words.begin(), matched_words.end(), "tail"),
+        "MatchDocument() mustn't return a word from the search query that are present in the document"
+    );
+}
+void TestMatchDocumentByMinusWord() {
+    const auto& [matched_words, _] = CreateServerWithDocuments().MatchDocument("cat with thin -tail"s, 101);
+
+    ASSERT_HINT(matched_words.empty(), "MatchDocument() must return an empty vector if matching at least one minus word"s);
+}
+void TestMatchDocumentByNoneMatchingWords() {
+    const auto& [matched_words, _] = CreateServerWithDocuments().MatchDocument("cat"s, 102);
+
+    ASSERT_HINT(matched_words.empty(), "MatchDocument() mustn't return non empty vector if there is none matching words"s);
 }
 
 void TestSorting() {
-    vector<int> expected_ids = {101, 100, 102};
     vector<int> found_ids;
     for (const Document& doc : CreateServerWithDocuments().FindTopDocuments("cat with tail"s)) {
         found_ids.push_back(doc.id);
     }
-    //Пункт 2.
-    ASSERT_EQUAL_HINT(expected_ids, found_ids, "FindTopDocuments() must sort found documents by decrease of relevance");
+
+    ASSERT_EQUAL_HINT(vector<int>({101, 100, 102}), found_ids, "FindTopDocuments() must sort found documents by decrease of relevance");
 }
 
-//Пункт 3. Вы тестируете несколько результатов. Лучше разделить на две функции
 void TestComputeAverageRating() {
-    {
-        SearchServer server;
-        server.AddDocument(102, "dog with sunglasses"s, DocumentStatus::ACTUAL, {});
-        const vector<Document> found_docs = server.FindTopDocuments("dog with sunglasses"s);
-        //Пункт 2.
-        ASSERT_EQUAL_HINT(found_docs[0].rating, 0, "ComputeAverageRating() must return zero rating if there is no ratings"s);
-    }
-    {
-        const vector<Document> found_docs = CreateServerWithDocuments().FindTopDocuments("dog with sunglasses"s);
-        ASSERT_EQUAL_HINT(found_docs[0].rating, -1, "ComputeAverageRating() must return an arithmetic mean of the document's ratings"s);
-    }
+    const vector<Document> found_docs = CreateServerWithDocuments().FindTopDocuments("dog with sunglasses"s);
+
+    ASSERT_EQUAL_HINT(found_docs[0].rating, -1, "ComputeAverageRating() must return an arithmetic mean of the document's ratings"s);
+}
+void TestComputeAverageRatingWithNoneRatings() {
+    SearchServer server;
+    server.AddDocument(102, "dog with sunglasses"s, DocumentStatus::ACTUAL, {});
+    const vector<Document> found_docs = server.FindTopDocuments("dog with sunglasses"s);
+
+    ASSERT_EQUAL_HINT(found_docs[0].rating, 0, "ComputeAverageRating() must return zero rating if there is no ratings"s);
 }
 
-//Использование циклов в тестах не хорошо, так как если тест будет падать, почему это будет происходить будет довольно сложно
-//А делать assert в цикле непонятно в двойне. 
-//Я понимаю, что эта запись компактна, но я рекомендую обращаться по индексам и сравнивать значения, т.к. 
-//данные вам изначально известны.
-void TestUserPredicates() {
+void TestFindTopDocumentsByUserPredicate() {
     auto is_id_even = [](int id, DocumentStatus status, int rating) {
         return id % 2 == 0;
     };
-    const vector<Document> found_docs = CreateServerWithDocuments().FindTopDocuments("with"s, is_id_even);
-    for (const Document& doc : found_docs) {
-        ASSERT_HINT(doc.id % 2 == 0, "FindTopDocuments() must work with user set predicate"s);
+    set<int> found_ids;
+    for (const Document& doc : CreateServerWithDocuments().FindTopDocuments("with", is_id_even)) {
+        found_ids.insert(doc.id);
     }
+
+    ASSERT_EQUAL_HINT(set<int>({100, 102}), found_ids, "FindTopDocuments() must work with user set predicate");
 }
 
-void TestFindByStatus() {
+void TestFindTopDocumentsByStatus() {
     const vector<Document> found_docs = CreateServerWithDocuments().FindTopDocuments("snake"s, DocumentStatus::IRRELEVANT);
-    ASSERT_EQUAL_HINT(found_docs[0].id, 103, "FindTopDocuments() must work with user set document status"s);
+
+    ASSERT_EQUAL_HINT(found_docs[0].id, 103, "FindTopDocuments() must work with user set document status");
 }
 
-//Использование циклов в тестах не хорошо, так как если тест будет падать, почему это будет происходить будет довольно сложно
-//А делать assert в цикле непонятно в двойне. 
-//Я понимаю, что эта запись компактна, но я рекомендую обращаться по индексам и сравнивать значения, т.к. 
-//данные вам изначально известны.
 void TestRelevance() {
     map<int, double> id_to_relevance = {
         {100, 0.2*(log(5.0/2.0) + log(5.0/3.0) + log(5.0/1.0))},
         {101, 0.25*(log(5.0/2.0) + log(5.0/3.0))},
         {102, 1.0/3.0*log(5.0/3.0)}
     };
-    for (const auto& doc : CreateServerWithDocuments().FindTopDocuments("cat with ball"s)) {
-        ASSERT_EQUAL_HINT(doc.relevance, id_to_relevance.at(doc.id), "FindAllDocuments() must calculate relevance using the TF-ITF method"s);
+    map<int, double> found_id_to_relevance;
+    for (const Document& doc : CreateServerWithDocuments().FindTopDocuments("cat with ball")) {
+        found_id_to_relevance[doc.id] = doc.relevance;
     }
+
+    ASSERT_EQUAL_HINT(id_to_relevance, found_id_to_relevance, "FindAllDocuments() must calculate relevance using the TF-ITF method"s);
 }
 
 void TestSearchServer() {
     RUN_TEST(TestAddDocument);
-    RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
-    RUN_TEST(TestExcludeDocumentsWithMinusWords);
+    RUN_TEST(TestSetStopWords);
+    RUN_TEST(TestParseQuery);
     RUN_TEST(TestMatchDocument);
+    RUN_TEST(TestMatchDocumentByNoneMatchingWords);
+    RUN_TEST(TestMatchDocumentByMinusWord);
     RUN_TEST(TestSorting);
     RUN_TEST(TestComputeAverageRating);
-    RUN_TEST(TestUserPredicates);
-    RUN_TEST(TestFindByStatus);
+    RUN_TEST(TestComputeAverageRatingWithNoneRatings);
+    RUN_TEST(TestFindTopDocumentsByUserPredicate);
+    RUN_TEST(TestFindTopDocumentsByStatus);
     RUN_TEST(TestRelevance);
 }
 
