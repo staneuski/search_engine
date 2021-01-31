@@ -7,6 +7,9 @@
 #include <utility>
 #include <vector>
 
+//Работа не сложная. Написана хорошо. Поправьте замечания и будет зачет. Если есть спорные или обычные вопросы, то пишите в Slack
+//Пока не зачет
+
 using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
@@ -351,6 +354,7 @@ void RunTestImpl(F test, const string& test_name) {
 
 /* ------------------------ SearchServer unit tests ------------------------ */
 
+//Вы первый студент, который добавил функцию инициализации. Это правильный подход. Я полагаю, что у вас есть опты, т.к. новички обычно так не делают.
 SearchServer CreateServerWithDocuments() {
     SearchServer server;
     server.AddDocument(100, "white stily cat with ball"s, DocumentStatus::ACTUAL, {8, -3});
@@ -361,21 +365,34 @@ SearchServer CreateServerWithDocuments() {
     return server;
 }
 
+// Хорошей отправной точкой для Unit тестов служат правила из книги 
+// Рой Орушев Искусство автономного тестировани
+//	Основные правила такие:
+//		1. Название тестовой функции должно включать имя тестируемой функции, сценарий в рамках которого тестируется функция, поведение ожидаемое в данном сценарии
+//		2. Отделяйте утверждения от действий пустой строкой.
+//		3. Тестирование только одного результата
+//		4. Устранение дублирования
+//
+// На пункт 1 я не буду особо обращать внимания, а по остальным пунктам оставлю коментарии.
+
 void TestAddDocument() {
     const vector<Document> found_docs = CreateServerWithDocuments().FindTopDocuments("sunglasses"s);
     ASSERT_HINT(!found_docs.empty(), "AddDocument() must add documents"s);
 }
 
+//Пункт 3. Вы тестируете несколько результатов. Лучше разделить на две функции
 void TestExcludeStopWordsFromAddedDocumentContent() {
     {
         const vector<Document> found_docs = CreateServerWithDocuments().FindTopDocuments("dog"s);
         const string hint = "FindTopDocuments() must find matched document"s;
+        //Пункт 2.
         ASSERT_EQUAL_HINT(found_docs.size(), 1, hint);
         ASSERT_EQUAL_HINT(found_docs[0].id, 102, hint);
     }
     {
         SearchServer server = CreateServerWithDocuments();
         server.SetStopWords("sunglasses"s);
+        //Пункт 2.
         ASSERT_HINT(
             server.FindTopDocuments("sunglasses"s).empty(),
             "SetStopWords() must exclude stop words from document content"s
@@ -389,11 +406,13 @@ void TestExcludeDocumentsWithMinusWords() {
     ASSERT_HINT(server.FindTopDocuments("-sunglasses"s).empty(), "document with minus word must be excluded from result"s);
 }
 
+//Пункт 3. Вы тестируете несколько результатов. Лучше разделить на три функции
 void TestMatchDocument() {
     const SearchServer server = CreateServerWithDocuments();
     {
         const auto& [matched_words, _] = server.MatchDocument("white cat without tail"s, 100);
         const string hint = "MatchDocument() must return all words from the search query that are present in the document";
+        //Пункт 2.
         ASSERT_HINT(count(matched_words.begin(), matched_words.end(), "white"s), hint);
         ASSERT_HINT(count(matched_words.begin(), matched_words.end(), "cat"s), hint);
         ASSERT_HINT(
@@ -417,14 +436,17 @@ void TestSorting() {
     for (const Document& doc : CreateServerWithDocuments().FindTopDocuments("cat with tail"s)) {
         found_ids.push_back(doc.id);
     }
+    //Пункт 2.
     ASSERT_EQUAL_HINT(expected_ids, found_ids, "FindTopDocuments() must sort found documents by decrease of relevance");
 }
 
+//Пункт 3. Вы тестируете несколько результатов. Лучше разделить на две функции
 void TestComputeAverageRating() {
     {
         SearchServer server;
         server.AddDocument(102, "dog with sunglasses"s, DocumentStatus::ACTUAL, {});
         const vector<Document> found_docs = server.FindTopDocuments("dog with sunglasses"s);
+        //Пункт 2.
         ASSERT_EQUAL_HINT(found_docs[0].rating, 0, "ComputeAverageRating() must return zero rating if there is no ratings"s);
     }
     {
@@ -433,6 +455,10 @@ void TestComputeAverageRating() {
     }
 }
 
+//Использование циклов в тестах не хорошо, так как если тест будет падать, почему это будет происходить будет довольно сложно
+//А делать assert в цикле непонятно в двойне. 
+//Я понимаю, что эта запись компактна, но я рекомендую обращаться по индексам и сравнивать значения, т.к. 
+//данные вам изначально известны.
 void TestUserPredicates() {
     auto is_id_even = [](int id, DocumentStatus status, int rating) {
         return id % 2 == 0;
@@ -448,6 +474,10 @@ void TestFindByStatus() {
     ASSERT_EQUAL_HINT(found_docs[0].id, 103, "FindTopDocuments() must work with user set document status"s);
 }
 
+//Использование циклов в тестах не хорошо, так как если тест будет падать, почему это будет происходить будет довольно сложно
+//А делать assert в цикле непонятно в двойне. 
+//Я понимаю, что эта запись компактна, но я рекомендую обращаться по индексам и сравнивать значения, т.к. 
+//данные вам изначально известны.
 void TestRelevance() {
     map<int, double> id_to_relevance = {
         {100, 0.2*(log(5.0/2.0) + log(5.0/3.0) + log(5.0/1.0))},
