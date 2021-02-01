@@ -7,8 +7,6 @@
 #include <utility>
 #include <vector>
 
-//ќтлично. Хороша¤ работа. ≈сть одно небольшое замечание.
-
 using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
@@ -391,20 +389,14 @@ void TestAddDocument() {
 
 void TestSetStopWords() {
     SearchServer server = CreateServerWithDocuments();
-    //У вас метод проверки назваетс¤ TestSetStopWords, если этот ассерт сработает, то совпадет ли название тестируемого метода с тестируемым состо¤нием?
-    //Вы тестируете два разных сотсо¤ни¤ в одном методе. Не очень хорошее решение.
-    ASSERT(!server.FindTopDocuments("sunglasses").empty());
-
     server.SetStopWords("sunglasses");
 
-    ASSERT_HINT(server.FindTopDocuments("sunglasses").empty(), "SetStopWords() must exclude stop words from document content"
-);
+    ASSERT_HINT(server.FindTopDocuments("sunglasses").empty(), "SetStopWords() must exclude stop words from a document content");
 }
 
 void TestParseQuery() {
     const SearchServer server = CreateServerWithDocuments();
 
-    ASSERT(!server.FindTopDocuments("sunglasses"s).empty());
     ASSERT_HINT(server.FindTopDocuments("-sunglasses"s).empty(), "ParseQuery() must exclude a document with a minus word from the result");
 }
 
