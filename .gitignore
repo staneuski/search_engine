@@ -1,4 +1,1 @@
-Debug/
-*.dSYM/
-
-src/search_engine
+bin/
