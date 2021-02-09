@@ -39,10 +39,29 @@ vector<string> SplitIntoWords(const string& text) {
 }
 
 struct Document {
-    int id;
-    double relevance;
-    int rating;
+    Document() = default;
+
+    Document(int id, double relevance, int rating)
+        : id(id)
+        , relevance(relevance)
+        , rating(rating) {
+    }
+
+    int id = 0;
+    double relevance = 0.0;
+    int rating = 0;
 };
+
+template <typename StringContainer>
+set<string> MakeUniqueNonEmptyStrings(const StringContainer& strings) {
+    set<string> non_empty_strings;
+    for (const string& str : strings) {
+        if (!str.empty()) {
+            non_empty_strings.insert(str);
+        }
+    }
+    return non_empty_strings;
+}
 
 enum class DocumentStatus {
     ACTUAL,
@@ -53,10 +72,15 @@ enum class DocumentStatus {
 
 class SearchServer {
 public:
-    void SetStopWords(const string& text) {
-        for (const string& word : SplitIntoWords(text)) {
-            stop_words_.insert(word);
-        }
+    template <typename StringContainer>
+    explicit SearchServer(const StringContainer& stop_words)
+        : stop_words_(MakeUniqueNonEmptyStrings(stop_words))
+    {
+    }
+
+    explicit SearchServer(const string& stop_words_text)
+        : SearchServer(SplitIntoWords(stop_words_text))
+    {
     }
 
     void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings) {
@@ -107,10 +131,10 @@ public:
         );
     }
 
-    template <typename KeyMapper>
-    vector<Document> FindTopDocuments(const string& raw_query, KeyMapper key_mapper) const {
+    template <typename DocumentPredicate>
+    vector<Document> FindTopDocuments(const string& raw_query, DocumentPredicate doc_predicate) const {
         const Query query = ParseQuery(raw_query);
-        auto matched_documents = FindAllDocuments(query, key_mapper);
+        auto matched_documents = FindAllDocuments(query, doc_predicate);
 
         sort(matched_documents.begin(), matched_documents.end(),
              [](const Document& lhs, const Document& rhs) {
@@ -139,7 +163,7 @@ private:
         set<string> minus_words;
     };
 
-    set<string> stop_words_;
+    const set<string> stop_words_;
     map<string, map<int, double>> word_to_document_freqs_;
     map<int, DocumentData> documents_;
 
@@ -181,11 +205,7 @@ private:
             is_minus = true;
             text = text.substr(1);
         }
-        return {
-            text,
-            is_minus,
-            IsStopWord(text)
-        };
+        return {text, is_minus, IsStopWord(text)};
     }
 
     Query ParseQuery(const string& text) const {
@@ -372,9 +392,9 @@ void RunTestImpl(F test, const string& test_name) {
 /* ------------------------ SearchServer unit tests ------------------------ */
 
 SearchServer CreateServerWithDocuments() {
-    SearchServer server;
+    SearchServer server(""s);
     server.AddDocument(100, "white stily cat with ball"s, DocumentStatus::ACTUAL, {8, -3});
-    server.AddDocument(101, "cat with thin tail"s, DocumentStatus::ACTUAL, {7, 2, 7});
+    server.AddDocument(101, "cat with thin tail  "s, DocumentStatus::ACTUAL, {7, 2, 7});
     server.AddDocument(102, "dog with sunglasses"s, DocumentStatus::ACTUAL, {5, -12, 2, 1});
     server.AddDocument(103, "snake without tooth"s, DocumentStatus::IRRELEVANT, {-6, -3, 0, -10});
     server.AddDocument(104, "long fat snake"s, DocumentStatus::BANNED, {5, -1, 3, -3});
@@ -388,10 +408,6 @@ void TestAddDocument() {
 }
 
 void TestSetStopWords() {
-    SearchServer server = CreateServerWithDocuments();
-    server.SetStopWords("sunglasses");
-
-    ASSERT_HINT(server.FindTopDocuments("sunglasses").empty(), "SetStopWords() must exclude stop words from a document content");
 }
 
 void TestParseQuery() {
@@ -437,7 +453,7 @@ void TestComputeAverageRating() {
     ASSERT_EQUAL_HINT(found_docs[0].rating, -1, "ComputeAverageRating() must return an arithmetic mean of the document's ratings"s);
 }
 void TestComputeAverageRatingWithNoneRatings() {
-    SearchServer server;
+    SearchServer server(""s);
     server.AddDocument(102, "dog with sunglasses"s, DocumentStatus::ACTUAL, {});
     const vector<Document> found_docs = server.FindTopDocuments("dog with sunglasses"s);
 
