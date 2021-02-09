@@ -72,6 +72,8 @@ enum class DocumentStatus {
 
 class SearchServer {
 public:
+    SearchServer() = default;
+
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words))
@@ -163,7 +165,7 @@ private:
         set<string> minus_words;
     };
 
-    const set<string> stop_words_;
+    const set<string> stop_words_ = {};
     map<string, map<int, double>> word_to_document_freqs_;
     map<int, DocumentData> documents_;
 
@@ -392,7 +394,7 @@ void RunTestImpl(F test, const string& test_name) {
 /* ------------------------ SearchServer unit tests ------------------------ */
 
 SearchServer CreateServerWithDocuments() {
-    SearchServer server(""s);
+    SearchServer server;
     server.AddDocument(100, "white stily cat with ball"s, DocumentStatus::ACTUAL, {8, -3});
     server.AddDocument(101, "cat with thin tail  "s, DocumentStatus::ACTUAL, {7, 2, 7});
     server.AddDocument(102, "dog with sunglasses"s, DocumentStatus::ACTUAL, {5, -12, 2, 1});
@@ -408,6 +410,10 @@ void TestAddDocument() {
 }
 
 void TestSetStopWords() {
+    SearchServer server("sunglasses"s);
+    server.AddDocument(102, "dog with sunglasses"s, DocumentStatus::ACTUAL, {5, -12, 2, 1});
+
+    ASSERT_HINT(server.FindTopDocuments("sunglasses").empty(), "SetStopWords() must exclude stop words from a document content");
 }
 
 void TestParseQuery() {
@@ -453,7 +459,7 @@ void TestComputeAverageRating() {
     ASSERT_EQUAL_HINT(found_docs[0].rating, -1, "ComputeAverageRating() must return an arithmetic mean of the document's ratings"s);
 }
 void TestComputeAverageRatingWithNoneRatings() {
-    SearchServer server(""s);
+    SearchServer server;
     server.AddDocument(102, "dog with sunglasses"s, DocumentStatus::ACTUAL, {});
     const vector<Document> found_docs = server.FindTopDocuments("dog with sunglasses"s);
 
