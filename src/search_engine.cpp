@@ -195,19 +195,19 @@ private:
             for (const int rating : ratings) {
                 rating_sum += rating;
             }
-            return rating_sum / static_cast<int>(ratings.size());
+            return rating_sum/static_cast<int>(ratings.size());
         } else {
             return 0;
         }
     }
 
-    QueryWord ParseQueryWord(string text) const {
+    QueryWord ParseQueryWord(string word) const {
         bool is_minus = false;
-        if (text[0] == '-') {
+        if (word[0] == '-') {
             is_minus = true;
-            text = text.substr(1);
+            word = word.substr(1);
         }
-        return {text, is_minus, IsStopWord(text)};
+        return {word, is_minus, IsStopWord(word)};
     }
 
     Query ParseQuery(const string& text) const {
