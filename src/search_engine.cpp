@@ -110,12 +110,12 @@ public:
         const double inv_word_count = 1.0/words.size();
         for (const string& word : words) {
             {
+                ThrowInvalidWord(word);
                 if (count(documents_ids_.begin(), documents_ids_.end(), document_id)) {
                     throw invalid_argument(
                         "already used id --> " + to_string(document_id)
                     );
                 }
-                ThrowInvalidWord(word);
             }
             word_to_document_freqs_[word][document_id] += inv_word_count;
         }
@@ -131,7 +131,6 @@ public:
         const Query query = ParseQuery(raw_query);
         vector<string> matched_words;
         for (const string& word : query.plus_words) {
-            ThrowInvalidWord(word);
             if (!IsContainWord(word)) {
                 continue;
             }
@@ -140,7 +139,6 @@ public:
             }
         }
         for (const string& word : query.minus_words) {
-            ThrowInvalidMinusWord(word);
             if (!IsContainWord(word)) {
                 continue;
             }
@@ -169,13 +167,6 @@ public:
     vector<Document> FindTopDocuments(const string& raw_query,
                                       DocumentPredicate doc_predicate) const {
         const Query query = ParseQuery(raw_query);
-        for (const string& word : query.plus_words) {
-            ThrowInvalidWord(word);
-        }
-        for (const string& word : query.minus_words) {
-            ThrowInvalidMinusWord(word);
-        }
-
         auto matched_documents = FindAllDocuments(query, doc_predicate);
         sort(matched_documents.begin(), matched_documents.end(),
              [](const Document& lhs, const Document& rhs) {
@@ -229,12 +220,6 @@ private:
             throw invalid_argument("invalid word --> [" + word + ']');
         }
     }
-    static void ThrowInvalidMinusWord(const string& word) {
-        ThrowInvalidWord(word);
-        if (word[0] == '-' || word.empty()) {
-            throw invalid_argument("invalid minus word --> [" + word + ']');
-        }
-    }
     void ThrowInvalidStopWords() const {
         for (const string& word : stop_words_) {
             ThrowInvalidWord(word);
@@ -264,10 +249,14 @@ private:
     }
 
     QueryWord ParseQueryWord(string word) const {
+        ThrowInvalidWord(word);
         bool is_minus = false;
         if (word[0] == '-') {
-            word = word.substr(1);
+            if (word.substr(0, 2) == "--" || (word.size() == 1)) {
+                throw invalid_argument("invalid minus word --> [" + word + ']');
+            }
             is_minus = true;
+            word = word.substr(1);
         }
         return {word, is_minus, IsStopWord(word)};
     }
