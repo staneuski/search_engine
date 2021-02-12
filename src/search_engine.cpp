@@ -7,6 +7,14 @@
 #include <utility>
 #include <vector>
 
+//1. Удаляйте коментарии (тесты)
+//2. Измените логику конструкторов
+//3. Нужно поправить GetDocumentId
+//4. Поправить валидацию в AddDocument
+//5. Перенести согласно заданию проверку в метода FindAllDocument и MatchDocument
+
+//Не зачет. Очень многоь ошибок. Пишите мне, если нужна помощь. Удачи.
+
 using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
@@ -75,6 +83,12 @@ class SearchServer {
 public:
     SearchServer() = default;
 
+    //Логика инициализация должна всегда проходить в таком порядке
+    //1. Валидация
+    //2. Инициализация
+    //В вашем случае вы инициализируете, а потом валидируете. Для чего нужна валидация? Для того чтобы понять можем ли мы использовать этот объект или нет
+    //Представим, что у вас передается объект и он не валидный и вы инициализируете в списке инициализации, внутри этой инициализации вызывается исключение
+    //, а вам нужно к примеру сделать объект в дефолт состоянии, если аргумент не валидный. Это выстрел себе в ногу.
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words))
@@ -82,6 +96,7 @@ public:
         ThrowInvalidStopWords();
     }
 
+    //В данном случае вызывая другой конструктор вы будете проверять на валидность слова два раза, если они валидны и генерировать одно исключение, елси нет
     explicit SearchServer(const string& stop_words_text)
         : SearchServer(SplitIntoWords(stop_words_text))
     {
@@ -91,6 +106,9 @@ public:
     int GetDocumentCount() const {
         return documents_.size();
     }
+    //1. Не забываем пустую строку между функциями
+    //2. В чем логика? Если индекс > 0 и индекс меньше или равен количеству документов, вы возвращаете элемент по индексу и если нет, то тоже возвращаете документ по индексу???
+    //Ситуация требует объяснения. Напишите мне в личку в слак и объясните что вы хотели сделать. Вы явно что то упустили.
     int GetDocumentId(int index) const {
         if (index > 0 && index <= GetDocumentCount()) {
             documents_ids_.at(index);
@@ -110,7 +128,9 @@ public:
         const double inv_word_count = 1.0/words.size();
         for (const string& word : words) {
             {
+                //Это валидная ситуация когда вы можете добавить часть не валидного документа? Мне кажется нет. Опять же лучше придерживаться тактики вначале Проверка, потом работа с данными
                 ThrowInvalidWord(word);
+                //Зачем вы проверяете на каждой итерации? Вы можете это проверить однажды, в тот же момент, когда проверяете отрицательный или нет id?
                 if (count(documents_ids_.begin(), documents_ids_.end(), document_id)) {
                     throw invalid_argument(
                         "already used id --> " + to_string(document_id)
@@ -252,6 +272,10 @@ private:
         ThrowInvalidWord(word);
         bool is_minus = false;
         if (word[0] == '-') {
+            //Я не думаю, что то что вы не следовали заданию и перенесли проверку из методов FindDocument и MatchDocument в этот метод.
+            //1. Парсинг должен проходить без генерации исключений, а валидация данных, должна проходить после парсинга
+            //2. Для некоторых случаев может быть валидно иметь насколько минусов --. Так к примеру в большом проекте вы могли бы очень навредить вот такими изменениями.
+            //Перенесите проверку как указано в задании
             if (word.substr(0, 2) == "--" || (word.size() == 1)) {
                 throw invalid_argument("invalid minus word --> [" + word + ']');
             }
