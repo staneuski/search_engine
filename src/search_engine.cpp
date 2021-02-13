@@ -7,12 +7,6 @@
 #include <utility>
 #include <vector>
 
-//1. DONE Удаляйте коментарии (тесты)
-//2. Измените логику конструкторов
-//3. DONE Нужно поправить GetDocumentId
-//4. DONE Поправить валидацию в AddDocument
-//5. DONE Перенести согласно заданию проверку в метода FindAllDocument и MatchDocument
-
 using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
@@ -102,13 +96,13 @@ public:
 
     void AddDocument(int document_id, const string& document,
                      DocumentStatus status, const vector<int>& ratings) {
-        const vector<string> words = ThrowInvalidWords(SplitIntoWordsNoStop(document));
         if (count(documents_ids_.begin(), documents_ids_.end(), document_id)) {
             throw invalid_argument("already used id --> " + to_string(document_id));
         } else if (document_id < 0) {
             throw invalid_argument("negative document id --> " + to_string(document_id));
         }
 
+        const vector<string> words = ThrowInvalidWords(SplitIntoWordsNoStop(document));
         const double inv_word_count = 1.0/words.size();
         for (const string& word : words) {
             word_to_document_freqs_[word][document_id] += inv_word_count;
@@ -235,9 +229,8 @@ private:
     }
 
     QueryWord ParseQueryWord(string word) const {
-        bool is_minus = false;
-        if (word[0] == '-') {
-            is_minus = true;
+        bool is_minus = (word[0] == '-');
+        if (is_minus) {
             word = word.substr(1);
         }
         return {word, is_minus, IsStopWord(word)};
