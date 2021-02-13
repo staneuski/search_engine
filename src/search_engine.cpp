@@ -7,13 +7,11 @@
 #include <utility>
 #include <vector>
 
-//1. Удаляйте коментарии (тесты)
+//1. DONE Удаляйте коментарии (тесты)
 //2. Измените логику конструкторов
-//3. Нужно поправить GetDocumentId
-//4. Поправить валидацию в AddDocument
-//5. Перенести согласно заданию проверку в метода FindAllDocument и MatchDocument
-
-//Не зачет. Очень многоь ошибок. Пишите мне, если нужна помощь. Удачи.
+//3. DONE Нужно поправить GetDocumentId
+//4. DONE Поправить валидацию в AddDocument
+//5. DONE Перенести согласно заданию проверку в метода FindAllDocument и MatchDocument
 
 using namespace std;
 
@@ -83,60 +81,36 @@ class SearchServer {
 public:
     SearchServer() = default;
 
-    //Логика инициализация должна всегда проходить в таком порядке
-    //1. Валидация
-    //2. Инициализация
-    //В вашем случае вы инициализируете, а потом валидируете. Для чего нужна валидация? Для того чтобы понять можем ли мы использовать этот объект или нет
-    //Представим, что у вас передается объект и он не валидный и вы инициализируете в списке инициализации, внутри этой инициализации вызывается исключение
-    //, а вам нужно к примеру сделать объект в дефолт состоянии, если аргумент не валидный. Это выстрел себе в ногу.
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
-        : stop_words_(MakeUniqueNonEmptyStrings(stop_words))
+        : stop_words_(ThrowInvalidWords(MakeUniqueNonEmptyStrings(stop_words)))
     {
-        ThrowInvalidStopWords();
     }
 
-    //В данном случае вызывая другой конструктор вы будете проверять на валидность слова два раза, если они валидны и генерировать одно исключение, елси нет
     explicit SearchServer(const string& stop_words_text)
         : SearchServer(SplitIntoWords(stop_words_text))
     {
-        ThrowInvalidStopWords();
     }
 
     int GetDocumentCount() const {
         return documents_.size();
     }
-    //1. Не забываем пустую строку между функциями
-    //2. В чем логика? Если индекс > 0 и индекс меньше или равен количеству документов, вы возвращаете элемент по индексу и если нет, то тоже возвращаете документ по индексу???
-    //Ситуация требует объяснения. Напишите мне в личку в слак и объясните что вы хотели сделать. Вы явно что то упустили.
+
     int GetDocumentId(int index) const {
-        if (index > 0 && index <= GetDocumentCount()) {
-            documents_ids_.at(index);
-        }
         return documents_ids_.at(index);
     }
 
     void AddDocument(int document_id, const string& document,
                      DocumentStatus status, const vector<int>& ratings) {
-        if (document_id < 0) {
-            throw invalid_argument(
-                "negative document id --> " + to_string(document_id)
-            );
+        const vector<string> words = ThrowInvalidWords(SplitIntoWordsNoStop(document));
+        if (count(documents_ids_.begin(), documents_ids_.end(), document_id)) {
+            throw invalid_argument("already used id --> " + to_string(document_id));
+        } else if (document_id < 0) {
+            throw invalid_argument("negative document id --> " + to_string(document_id));
         }
 
-        const vector<string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0/words.size();
         for (const string& word : words) {
-            {
-                //Это валидная ситуация когда вы можете добавить часть не валидного документа? Мне кажется нет. Опять же лучше придерживаться тактики вначале Проверка, потом работа с данными
-                ThrowInvalidWord(word);
-                //Зачем вы проверяете на каждой итерации? Вы можете это проверить однажды, в тот же момент, когда проверяете отрицательный или нет id?
-                if (count(documents_ids_.begin(), documents_ids_.end(), document_id)) {
-                    throw invalid_argument(
-                        "already used id --> " + to_string(document_id)
-                    );
-                }
-            }
             word_to_document_freqs_[word][document_id] += inv_word_count;
         }
         documents_.emplace(
@@ -148,7 +122,7 @@ public:
 
     tuple<vector<string>, DocumentStatus> MatchDocument(const string& raw_query,
                                                         int document_id) const {
-        const Query query = ParseQuery(raw_query);
+        const Query query = ThrowInvalidQuery(ParseQuery(raw_query));
         vector<string> matched_words;
         for (const string& word : query.plus_words) {
             if (!IsContainWord(word)) {
@@ -186,7 +160,7 @@ public:
     template <typename DocumentPredicate>
     vector<Document> FindTopDocuments(const string& raw_query,
                                       DocumentPredicate doc_predicate) const {
-        const Query query = ParseQuery(raw_query);
+        const Query query = ThrowInvalidQuery(ParseQuery(raw_query));
         auto matched_documents = FindAllDocuments(query, doc_predicate);
         sort(matched_documents.begin(), matched_documents.end(),
              [](const Document& lhs, const Document& rhs) {
@@ -225,25 +199,17 @@ private:
             return c >= '\0' && c < ' ';
         });
     }
+
     bool IsStopWord(const string& word) const {
         return stop_words_.count(word);
     }
+
     bool IsContainWord(const string& word) const {
         return word_to_document_freqs_.count(word);
     }
+
     bool IsWordContainId(const string& word, const int& document_id) const {
         return word_to_document_freqs_.at(word).count(document_id);
-    }
-
-    static void ThrowInvalidWord(const string& word) {
-        if (!IsValidWord(word)) {
-            throw invalid_argument("invalid word --> [" + word + ']');
-        }
-    }
-    void ThrowInvalidStopWords() const {
-        for (const string& word : stop_words_) {
-            ThrowInvalidWord(word);
-        }
     }
 
     vector<string> SplitIntoWordsNoStop(const string& text) const {
@@ -269,16 +235,8 @@ private:
     }
 
     QueryWord ParseQueryWord(string word) const {
-        ThrowInvalidWord(word);
         bool is_minus = false;
         if (word[0] == '-') {
-            //Я не думаю, что то что вы не следовали заданию и перенесли проверку из методов FindDocument и MatchDocument в этот метод.
-            //1. Парсинг должен проходить без генерации исключений, а валидация данных, должна проходить после парсинга
-            //2. Для некоторых случаев может быть валидно иметь насколько минусов --. Так к примеру в большом проекте вы могли бы очень навредить вот такими изменениями.
-            //Перенесите проверку как указано в задании
-            if (word.substr(0, 2) == "--" || (word.size() == 1)) {
-                throw invalid_argument("invalid minus word --> [" + word + ']');
-            }
             is_minus = true;
             word = word.substr(1);
         }
@@ -298,10 +256,31 @@ private:
         return query;
     }
 
+    static Query ThrowInvalidQuery(const Query& query) {
+        ThrowInvalidWords(query.plus_words);
+        ThrowInvalidWords(query.minus_words);
+        for (const string& word : query.minus_words) {
+            if (word[0] == '-' || word.empty()) {
+                throw invalid_argument("invalid minus word --> [" + word + ']');
+            }
+        }
+        return query;
+    }
+
     double ComputeWordInverseDocumentFreq(const string& word) const {
         return (word_to_document_freqs_.at(word).size())
                 ? log(static_cast<double>(GetDocumentCount())/word_to_document_freqs_.at(word).size())
                 : 0;
+    }
+
+    template <typename StringContainer>
+    static StringContainer ThrowInvalidWords(const StringContainer& words) {
+        for (const string& word : words) {
+            if (!IsValidWord(word)) {
+                throw invalid_argument("invalid word --> [" + word + ']');
+            }
+        }
+        return words;
     }
 
     template <typename DocumentPredicate>
@@ -426,9 +405,14 @@ ostream& operator<<(ostream& out, const vector<Document>& documents) {
 
 // ------------------------------------------------------------------------- */
 
-void AddDocument(SearchServer& search_server,
-                 int document_id, const string& document, DocumentStatus status,
-                 const vector<int>& ratings) {
+void AddDocument(
+    SearchServer& search_server,
+    int document_id,
+    const string& document,
+    DocumentStatus status,
+    const vector<int>& ratings
+)
+{
     try {
         search_server.AddDocument(document_id, document, status, ratings);
     } catch (const exception& e) {
