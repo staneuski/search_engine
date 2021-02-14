@@ -7,11 +7,7 @@
 #include <utility>
 #include <vector>
 
-//1. DONE Удаляйте коментарии (тесты)
-//2. Измените логику конструкторов
-//3. DONE Нужно поправить GetDocumentId
-//4. DONE Поправить валидацию в AddDocument
-//5. DONE Перенести согласно заданию проверку в метода FindAllDocument и MatchDocument
+//Отлично. Зачет. Есть замечание, можете посмотреть и поправить.
 
 using namespace std;
 
@@ -259,6 +255,8 @@ private:
     static Query ThrowInvalidQuery(const Query& query) {
         ThrowInvalidWords(query.plus_words);
         ThrowInvalidWords(query.minus_words);
+    	//Этот часть метода не сильно отличается от ThrowInvalidWords
+    	//Можно использовать пердикат, для проверки условия и проброса исключения.
         for (const string& word : query.minus_words) {
             if (word[0] == '-' || word.empty()) {
                 throw invalid_argument("invalid minus word --> [" + word + ']');
