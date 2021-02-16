@@ -32,9 +32,7 @@ vector<string> SplitIntoWords(const string& text) {
 
     words.push_back(word);
     words.erase(
-        remove_if(words.begin(), words.end(), [](const string& word) {
-            return word == ""s;
-        }),
+        remove_if(words.begin(), words.end(), [](const string& word) { return word.empty(); }),
         words.end()
     );
     return words;
@@ -255,13 +253,10 @@ private:
     static Query ThrowInvalidQuery(const Query& query) {
         ThrowInvalidWords(query.plus_words);
         ThrowInvalidWords(query.minus_words);
-    	//Этот часть метода не сильно отличается от ThrowInvalidWords
-    	//Можно использовать пердикат, для проверки условия и проброса исключения.
-        for (const string& word : query.minus_words) {
-            if (word[0] == '-' || word.empty()) {
-                throw invalid_argument("invalid minus word --> [" + word + ']');
-            }
-        }
+        ThrowInvalidWords(
+            query.minus_words,
+            [](const string& word){ return word[0] == '-' || word.empty(); }
+        );
         return query;
     }
 
@@ -273,8 +268,17 @@ private:
 
     template <typename StringContainer>
     static StringContainer ThrowInvalidWords(const StringContainer& words) {
+        return ThrowInvalidWords(
+            words,
+            [](const string& word){ return !IsValidWord(word); }
+        );
+    }
+
+    template <typename StringContainer, typename WordPredicate>
+    static StringContainer ThrowInvalidWords(const StringContainer& words,
+                                             WordPredicate word_predicate) {
         for (const string& word : words) {
-            if (!IsValidWord(word)) {
+            if (word_predicate(word)) {
                 throw invalid_argument("invalid word --> [" + word + ']');
             }
         }
@@ -414,23 +418,23 @@ void AddDocument(
     try {
         search_server.AddDocument(document_id, document, status, ratings);
     } catch (const exception& e) {
-        cout << "Error adding document "s << document_id
-             << ": "s << e.what() << endl;
+        cout << "Error adding document " << document_id
+             << ": " << e.what() << endl;
     }
 }
 
 void FindTopDocuments(const SearchServer& search_server, const string& raw_query) {
-    cout << "Search results for the query : "s << raw_query << endl;
+    cout << "Search results for the query : " << raw_query << endl;
     try {
         cout << search_server.FindTopDocuments(raw_query) << endl;
     } catch (const exception& e) {
-        cout << "Search error: "s << e.what() << endl;
+        cout << "Search error: " << e.what() << endl;
     }
 }
 
 void MatchDocuments(const SearchServer& search_server, const string& query) {
     try {
-        cout << "Matching documents for the query : "s << query << endl;
+        cout << "Matching documents for the query : " << query << endl;
         const int document_count = search_server.GetDocumentCount();
         for (int index = 0; index < document_count; ++index) {
             const int document_id = search_server.GetDocumentId(index);
@@ -438,8 +442,8 @@ void MatchDocuments(const SearchServer& search_server, const string& query) {
             PrintMatchDocumentResult(document_id, words, status);
         }
     } catch (const exception& e) {
-        cout << "Error matching documents for the query : "s << query
-             << ": "s << e.what() << endl;
+        cout << "Error matching documents for the query : " << query
+             << ": " << e.what() << endl;
     }
 }
 
