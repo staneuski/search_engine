@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <set>
 #include <string>
@@ -322,6 +323,52 @@ private:
     }
 };
 
+template <typename InputIt>
+class IteratorRange {
+public:
+    IteratorRange(const InputIt begin, const InputIt end)
+        : first_(begin)
+        , last_(end)
+        , size_(distance(first_, last_)) {
+    }
+
+    InputIt begin() const {
+        return first_;
+    }
+
+    InputIt end() const {
+        return last_;
+    }
+
+private:
+    InputIt first_, last_;
+    size_t size_;
+};
+
+template <typename InputIt>
+class Paginator {
+public:
+    Paginator(const InputIt begin, const InputIt end, const size_t page_size) {
+        InputIt page_end = begin;
+        while (distance(page_end, end) > 0) {
+            InputIt page_begin = page_end;
+            advance(page_end, page_size);
+            pages_.push_back({page_begin, page_end});
+        }
+    }
+
+    auto begin() const {
+        return pages_.begin();
+    }
+
+    auto end() const {
+        return pages_.end();
+    }
+
+private:
+    vector<IteratorRange<InputIt>> pages_;
+};
+
 /* ---------------------------- Input & Output ----------------------------- */
 
 string ReadLine() {
@@ -348,7 +395,7 @@ void PrintMatchDocumentResult(int document_id, const vector<string>& words, Docu
     cout << '}' << endl;
 }
 
-template <typename T, typename S> 
+template <typename T, typename S>
 ostream& operator<<(ostream& out, const pair<T, S>& p) {
     out << p.first << ": " << p.second;
     return out;
@@ -397,6 +444,14 @@ ostream& operator<<(ostream& out, const Document& document) {
     return out;
 }
 
+template <typename InputIt>
+ostream& operator<<(ostream& out, const IteratorRange<InputIt> iterator_range) {
+    for (auto it = iterator_range.begin(); it != iterator_range.end(); ++it) {
+        out << *it;
+    }
+    return out;
+}
+
 ostream& operator<<(ostream& out, const vector<Document>& documents) {
     vector<string> docs_info;
     for (const auto& doc : documents) {
@@ -412,17 +467,29 @@ ostream& operator<<(ostream& out, const vector<Document>& documents) {
 
 /* ------------------------------------------------------------------------- */
 
+template <typename Container>
+auto Paginate(const Container& c, size_t page_size) {
+    return Paginator(begin(c), end(c), page_size);
+}
+
 int main() {
     SearchServer search_server("and with"s);
 
     search_server.AddDocument(1, "funny pet and nasty rat"s, DocumentStatus::ACTUAL, {7, 2, 7});
-    search_server.AddDocument(2, "funny pet with curly hair"s, DocumentStatus::ACTUAL, {1, 2, 3});
+    search_server.AddDocument(2, "funny pet with curly hair"s, DocumentStatus::ACTUAL, {4, 2, 3});
     search_server.AddDocument(3, "big cat nasty hair"s, DocumentStatus::ACTUAL, {1, 2, 8});
-    search_server.AddDocument(4, "big dog cat Vladislav"s, DocumentStatus::ACTUAL, {1, 3, 2});
+    search_server.AddDocument(4, "big dog and rat Vladimir"s, DocumentStatus::ACTUAL, {1, -3, 2});
     search_server.AddDocument(5, "big dog hamster Borya"s, DocumentStatus::ACTUAL, {1, 1, 1});
+    search_server.AddDocument(6, "small dog Jack-Russell terier"s, DocumentStatus::ACTUAL, {5, 3, 4});
+    search_server.AddDocument(7, "dog Siberian hasky"s, DocumentStatus::ACTUAL, {2, 1, 3});
 
-    const auto search_results = search_server.FindTopDocuments("curly dog"s);
-    cout << search_results << endl;
+    const vector<Document> search_results = search_server.FindTopDocuments("curly dog"s);
+    const auto pages = Paginate(search_results, 2);
+
+    for (auto page = pages.begin(); page != pages.end(); ++page) {
+        cout << *page << endl;
+        cout << "Page break"s << endl;
+    }
 
     return 0;
 }
