@@ -389,6 +389,14 @@ ostream& operator<<(ostream& out, const map<Key, Value>& container) {
     return out << '}';
 }
 
+ostream& operator<<(ostream& out, const Document& document) {
+    out << "{ document_id = " << document.id
+        << ", relevance = " << document.relevance
+        << ", rating = " << document.rating
+        << " }";
+    return out;
+}
+
 ostream& operator<<(ostream& out, const vector<Document>& documents) {
     vector<string> docs_info;
     for (const auto& doc : documents) {
@@ -402,65 +410,19 @@ ostream& operator<<(ostream& out, const vector<Document>& documents) {
     return Print(out, docs_info, "\n"s);
 }
 
-// ------------------------------------------------------------------------- */
-
-void AddDocument(
-    SearchServer& search_server,
-    int document_id,
-    const string& document,
-    DocumentStatus status,
-    const vector<int>& ratings
-)
-{
-    try {
-        search_server.AddDocument(document_id, document, status, ratings);
-    } catch (const exception& e) {
-        cout << "Error adding document " << document_id
-             << ": " << e.what() << endl;
-    }
-}
-
-void FindTopDocuments(const SearchServer& search_server, const string& raw_query) {
-    cout << "Search results for the query : " << raw_query << endl;
-    try {
-        cout << search_server.FindTopDocuments(raw_query) << endl;
-    } catch (const exception& e) {
-        cout << "Search error: " << e.what() << endl;
-    }
-}
-
-void MatchDocuments(const SearchServer& search_server, const string& query) {
-    try {
-        cout << "Matching documents for the query : " << query << endl;
-        const int document_count = search_server.GetDocumentCount();
-        for (int index = 0; index < document_count; ++index) {
-            const int document_id = search_server.GetDocumentId(index);
-            const auto [words, status] = search_server.MatchDocument(query, document_id);
-            PrintMatchDocumentResult(document_id, words, status);
-        }
-    } catch (const exception& e) {
-        cout << "Error matching documents for the query : " << query
-             << ": " << e.what() << endl;
-    }
-}
+/* ------------------------------------------------------------------------- */
 
 int main() {
-    SearchServer search_server("и в на"s);
+    SearchServer search_server("and with"s);
 
-    AddDocument(search_server, 1, "пушистый кот пушистый хвост"s, DocumentStatus::ACTUAL, {7, 2, 7});
-    AddDocument(search_server, 1, "пушистый пёс и модный ошейник"s, DocumentStatus::ACTUAL, {1, 2});
-    AddDocument(search_server, -1, "пушистый пёс и модный ошейник"s, DocumentStatus::ACTUAL, {1, 2});
-    AddDocument(search_server, 3, "большой пёс скво\x12рец евгений"s, DocumentStatus::ACTUAL, {1, 3, 2});
-    AddDocument(search_server, 4, "большой пёс скворец евгений"s, DocumentStatus::ACTUAL, {1, 1, 1});
+    search_server.AddDocument(1, "funny pet and nasty rat"s, DocumentStatus::ACTUAL, {7, 2, 7});
+    search_server.AddDocument(2, "funny pet with curly hair"s, DocumentStatus::ACTUAL, {1, 2, 3});
+    search_server.AddDocument(3, "big cat nasty hair"s, DocumentStatus::ACTUAL, {1, 2, 8});
+    search_server.AddDocument(4, "big dog cat Vladislav"s, DocumentStatus::ACTUAL, {1, 3, 2});
+    search_server.AddDocument(5, "big dog hamster Borya"s, DocumentStatus::ACTUAL, {1, 1, 1});
 
-    FindTopDocuments(search_server, "пушистый -пёс"s);
-    FindTopDocuments(search_server, "пушистый --кот"s);
-    FindTopDocuments(search_server, "пушистый -"s);
-
-    MatchDocuments(search_server, "пушистый пёс"s);
-    MatchDocuments(search_server, "модный -кот"s);
-    MatchDocuments(search_server, "модный --пёс"s);
-    MatchDocuments(search_server, "пушистый - хвост"s);
+    const auto search_results = search_server.FindTopDocuments("curly dog"s);
+    cout << search_results << endl;
 
     return 0;
-} 
+}
