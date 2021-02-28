@@ -1,35 +1,33 @@
 #include "request_queue.h"
 
-namespace std {
-
 RequestQueue::RequestQueue(const SearchServer& search_server)
     : search_server_(search_server)
 {
 }
 
 template <typename DocumentPredicate>
-vector<Document> RequestQueue::AddFindRequest(
-    const string& raw_query,
+std::vector<Document> RequestQueue::AddFindRequest(
+    const std::string& raw_query,
     DocumentPredicate document_predicate
 )
 {
-    const vector<Document>& found_documents = search_server_.FindTopDocuments(raw_query, document_predicate);
+    const std::vector<Document>& found_documents = search_server_.FindTopDocuments(raw_query, document_predicate);
     UpdateRequestQueue(found_documents.empty());
     return found_documents;
 }
 
-vector<Document> RequestQueue::AddFindRequest(
-    const string& raw_query,
+std::vector<Document> RequestQueue::AddFindRequest(
+    const std::string& raw_query,
     DocumentStatus status
 )
 {
-    const vector<Document>& found_documents = search_server_.FindTopDocuments(raw_query, status);
+    const std::vector<Document>& found_documents = search_server_.FindTopDocuments(raw_query, status);
     UpdateRequestQueue(found_documents.empty());
     return found_documents;
 }
 
-vector<Document> RequestQueue::AddFindRequest(const string& raw_query) {
-    const vector<Document> found_documents = search_server_.FindTopDocuments(raw_query);
+std::vector<Document> RequestQueue::AddFindRequest(const std::string& raw_query) {
+    const std::vector<Document> found_documents = search_server_.FindTopDocuments(raw_query);
     UpdateRequestQueue(found_documents.empty());
     return found_documents;
 }
@@ -51,5 +49,3 @@ void RequestQueue::UpdateRequestQueue(const bool is_empty) {
         requests_.pop_front();
     }
 }
-
-} // namespace std

@@ -26,8 +26,6 @@ private:
     size_t size_;
 };
 
-namespace std {
-
 class RequestQueue {
 public:
     explicit RequestQueue(const SearchServer& search_server);
@@ -51,5 +49,3 @@ private:
 
     void UpdateRequestQueue(const bool is_empty);
 };
-
-} // namespace std
