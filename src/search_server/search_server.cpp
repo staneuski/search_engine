@@ -1,13 +1,3 @@
-#include <algorithm>
-#include <cmath>
-#include <map>
-#include <set>
-#include <string>
-#include <utility>
-#include <vector>
-
-#include "../document/document.h"
-#include "../string_processing/string_processing.h"
 #include "search_server.h"
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
