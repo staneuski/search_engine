@@ -4,11 +4,10 @@
 #include <string>
 #include <vector>
 
-#include "document/document.h"
-#include "read_input_functions/read_input_functions.h"
-#include "search_server/search_server.h"
-#include "request_queue/request_queue.h"
 #include "paginator/paginator.h"
+#include "read_input_functions/read_input_functions.h"
+#include "request_queue/request_queue.h"
+#include "search_server/search_server.h"
 
 using namespace std;
 
@@ -112,7 +111,9 @@ int main() {
     {
         SearchServer search_server("and at on in"s);
         AddDocuments(search_server);
-        const vector<Document> search_results = search_server.FindTopDocuments("curly dog"s);
+        const vector<Document> search_results = search_server.FindTopDocuments(
+            "curly dog"s
+        );
         const auto pages = Paginate(search_results, 2);
 
         for (auto page = pages.begin(); page != pages.end(); ++page) {
@@ -131,7 +132,10 @@ int main() {
         for (int i = 0; i < 1439; ++i) {
             request_queue.AddFindRequest("empty request"s);
         }
-        request_queue.AddFindRequest("curly dog"s);
+        auto is_id_even = [](int document_id, DocumentStatus status, int rating) {
+            return document_id % 2 == 0;
+        };
+        request_queue.AddFindRequest("curly dog"s, is_id_even);
         request_queue.AddFindRequest("big collar"s);
         request_queue.AddFindRequest("sparrow"s);
 

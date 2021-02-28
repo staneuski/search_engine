@@ -32,7 +32,14 @@ public:
 
     template <typename DocumentPredicate>
     std::vector<Document> AddFindRequest(const std::string& raw_query,
-                                         DocumentPredicate document_predicate);
+                                         DocumentPredicate document_predicate) {
+        const std::vector<Document>& found_documents = search_server_.FindTopDocuments(
+            raw_query,
+            document_predicate
+        );
+        UpdateRequestQueue(found_documents.empty());
+        return found_documents;
+    }
 
     std::vector<Document> AddFindRequest(const std::string& raw_query,
                                     DocumentStatus status);
