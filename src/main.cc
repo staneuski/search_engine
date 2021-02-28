@@ -9,6 +9,9 @@
 #include <utility>
 #include <vector>
 
+#include "document/document.h"
+#include "read_input_functions/read_input_functions.h"
+
 using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
@@ -32,26 +35,12 @@ vector<string> SplitIntoWords(const string& text) {
 
     words.push_back(word);
     words.erase(
-        remove_if(words.begin(), words.end(), [](const string& word) { return word.empty(); }),
+        remove_if(words.begin(), words.end(),
+                  [](const string& word) { return word.empty(); }),
         words.end()
     );
     return words;
 }
-
-struct Document {
-    Document() = default;
-
-    Document(int id, double relevance, int rating)
-        : id(id)
-        , relevance(relevance)
-        , rating(rating)
-    {
-    }
-
-    int id = 0;
-    double relevance = 0.0;
-    int rating = 0;
-};
 
 template <typename StringContainer>
 set<string> MakeUniqueNonEmptyStrings(const StringContainer& strings) {
@@ -63,13 +52,6 @@ set<string> MakeUniqueNonEmptyStrings(const StringContainer& strings) {
     }
     return non_empty_strings;
 }
-
-enum class DocumentStatus {
-    ACTUAL,
-    IRRELEVANT,
-    BANNED,
-    REMOVED,
-};
 
 class SearchServer {
 public:
@@ -324,6 +306,8 @@ private:
     }
 };
 
+/* ----------------------------- Request Queue ----------------------------- */
+
 template <typename InputIt>
 class IteratorRange {
 public:
@@ -345,8 +329,6 @@ private:
     InputIt first_, last_;
     size_t size_;
 };
-
-/* ----------------------------- Request Queue ----------------------------- */
 
 class RequestQueue {
 public:
@@ -435,19 +417,6 @@ auto Paginate(const Container& c, size_t page_size) {
 
 
 /* ---------------------------- Input & Output ----------------------------- */
-
-string ReadLine() {
-    string s;
-    getline(cin, s);
-    return s;
-}
-
-int ReadLineWithNumber() {
-    int result;
-    cin >> result;
-    ReadLine();
-    return result;
-}
 
 void PrintMatchDocumentResult(int document_id, const vector<string>& words, DocumentStatus status) {
     cout << "{ "
