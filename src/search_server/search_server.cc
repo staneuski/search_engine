@@ -7,36 +7,12 @@
 #include <vector>
 
 #include "../document/document.h"
+#include "../string_processing/string_processing.h"
 #include "search_server.h"
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
 namespace std {
-
-vector<string> SplitIntoWords(const string& text) {
-    vector<string> words;
-    string word;
-    for (const char c : text) {
-        if (text.size() == 0) {
-            break;
-        }
-        if (c == ' ') {
-            words.push_back(word);
-            word.clear();
-        } else {
-            word += c;
-        }
-    }
-
-    words.push_back(word);
-    words.erase(
-        remove_if(words.begin(), words.end(),
-                  [](const string& word) { return word.empty(); }),
-        words.end()
-    );
-    return words;
-}
-
 
 SearchServer::SearchServer() = default;
 
@@ -290,18 +266,5 @@ vector<Document> SearchServer::FindAllDocuments(
     }
     return matched_documents;
 }
-
-
-template <typename StringContainer>
-set<string> MakeUniqueNonEmptyStrings(const StringContainer& strings) {
-    set<string> non_empty_strings;
-    for (const string& str : strings) {
-        if (!str.empty()) {
-            non_empty_strings.insert(str);
-        }
-    }
-    return non_empty_strings;
-}
-
 
 } // namespace std

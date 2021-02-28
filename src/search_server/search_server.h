@@ -9,8 +9,6 @@
 
 namespace std {
 
-vector<string> SplitIntoWords(const string& text);
-
 class SearchServer {
 public:
     SearchServer();
@@ -94,8 +92,5 @@ private:
         DocumentPredicate predicate
     ) const;
 };
-
-template <typename StringContainer>
-set<string> MakeUniqueNonEmptyStrings(const StringContainer& strings);
 
 } // namespace std
