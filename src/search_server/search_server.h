@@ -7,6 +7,9 @@
 #include <utility>
 #include <vector>
 
+#include "../document/document.h"
+#include "../string_processing/string_processing.h"
+
 namespace std {
 
 class SearchServer {
