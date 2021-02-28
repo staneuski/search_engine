@@ -1,56 +1,16 @@
-#include <algorithm>
-#include <cmath>
 #include <iostream>
-#include <iterator>
 #include <map>
 #include <set>
-#include <stack>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "document/document.h"
 #include "read_input_functions/read_input_functions.h"
 #include "search_server/search_server.h"
 #include "request_queue/request_queue.h"
+#include "paginator/paginator.h"
 
 using namespace std;
-
-/* ----------------------------- Search Server ----------------------------- */
-
-/* ----------------------------- Request Queue ----------------------------- */
-
-/* ------------------------------- Padinate -------------------------------- */
-
-template <typename InputIt>
-class Paginator {
-public:
-    Paginator(const InputIt begin, const InputIt end, const size_t page_size) {
-        InputIt page_end = begin;
-        while (distance(page_end, end) > 0) {
-            InputIt page_begin = page_end;
-            advance(page_end, page_size);
-            pages_.push_back({page_begin, page_end});
-        }
-    }
-
-    auto begin() const {
-        return pages_.begin();
-    }
-
-    auto end() const {
-        return pages_.end();
-    }
-
-private:
-    vector<IteratorRange<InputIt>> pages_;
-};
-
-template <typename Container>
-auto Paginate(const Container& c, size_t page_size) {
-    return Paginator(begin(c), end(c), page_size);
-}
-
 
 /* ---------------------------- Input & Output ----------------------------- */
 
