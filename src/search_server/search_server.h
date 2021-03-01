@@ -41,6 +41,7 @@ public:
         DocumentStatus status_to_find = DocumentStatus::ACTUAL
     ) const;
 
+    //В классе должно быть только объЯвление, определение должно быть после тела класса
     template <typename DocumentPredicate>
     std::vector<Document> FindTopDocuments(
         const std::string& raw_query,
@@ -91,16 +92,20 @@ private:
 
     std::vector<std::string> SplitIntoWordsNoStop(const std::string& text) const;
 
+    //Статические методы должны быть перед не статическими
     static int ComputeAverageRating(const std::vector<int>& ratings);
 
     QueryWord ParseQueryWord(std::string word) const;
 
     Query ParseQuery(const std::string& text) const;
 
+    //Статические методы должны быть перед не статическими
     static Query ThrowInvalidQuery(const Query& query);
 
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
 
+    //В классе должно быть только объявление, определение должно быть после тела класса
+    //Статические методы должны быть перед не статическими
     template <typename StringContainer>
     static StringContainer ThrowInvalidWords(const StringContainer& words) {
         return ThrowInvalidWords(
@@ -109,6 +114,8 @@ private:
         );
     }
 
+    //В классе должно быть только объявление, определение должно быть после тела класса
+    //Статические методы должны быть перед не статическими
     template <typename StringContainer, typename WordPredicate>
     static StringContainer ThrowInvalidWords(const StringContainer& words,
                                              WordPredicate word_predicate) {
@@ -120,6 +127,7 @@ private:
         return words;
     }
 
+    //В классе должно быть только объявление, определение должно быть после тела класса
     template <typename DocumentPredicate>
     std::vector<Document> FindAllDocuments(
         const Query& query,

@@ -15,6 +15,8 @@ public:
         }
     }
 
+    //Методы дорлжны быть noexcept, так вызываемые метожды begin и end так же являются noexcept
+    //https://habr.com/ru/post/164221/
     auto begin() const {
         return pages_.begin();
     }

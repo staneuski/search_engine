@@ -52,6 +52,7 @@ private:
     const SearchServer& search_server_;
     std::deque<bool> requests_;
     int no_result_count_ = 0;
+    //Статические поля должны быть перед не статическими
     const static int sec_in_day_ = 1440;
 
     void UpdateRequestQueue(const bool is_empty);

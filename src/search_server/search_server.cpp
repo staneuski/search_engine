@@ -1,16 +1,20 @@
 #include "search_server.h"
 
+//Нужно переместить в хэдер
 SearchServer::SearchServer() = default;
 
+//Нужно переместить в хэдер
 SearchServer::SearchServer(const std::string& stop_words_text)
     : SearchServer(SplitIntoWords(stop_words_text))
 {
 }
 
+//Нужно переместить в хэдер и сделать noexcept и inline
 int SearchServer::GetDocumentCount() const {
     return documents_.size();
 }
 
+//Нужно переместить в хэдер
 int SearchServer::GetDocumentId(int index) const {
     return documents_ids_.at(index);
 }
@@ -90,14 +94,17 @@ bool SearchServer::IsValidWord(const std::string& word) {
     });
 }
 
+//Переместить в хэдер и сделать inline
 bool SearchServer::IsStopWord(const std::string& word) const {
     return stop_words_.count(word);
 }
 
+//Переместить в хэдер и сделать inline
 bool SearchServer::IsContainWord(const std::string& word) const {
     return word_to_document_freqs_.count(word);
 }
 
+//Переместить в хэдер и сделать inline
 bool SearchServer::IsWordContainId(
     const std::string& word,
     const int& document_id

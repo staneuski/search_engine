@@ -1,5 +1,8 @@
 #include "output_functions.h"
 
+//Тут тоже не думаю, что имеет смысл раздел¤ть определение с объ¤влением. Лучше все реализовать в h файле.
+//Вы также можете вначале определить все функции в h файле, а ниже их объ¤вить, если вам так больше нравитс¤.
+
 void PrintMatchDocumentResult(
     int document_id,
     const std::vector<std::string>& words,

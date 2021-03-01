@@ -8,6 +8,9 @@
 #include "../document/document.h"
 #include "../request_queue/request_queue.h"
 
+//Не используйте в названии файлов слово functions, лучше utils или helpers, т.к. functions звучит неоднозначно
+//либо функциональность, либо функции.
+
 void PrintMatchDocumentResult(
     int document_id,
     const std::vector<std::string>& words,

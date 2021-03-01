@@ -1,5 +1,6 @@
 #include "request_queue.h"
 
+//Конструктор переместите в хэдер
 RequestQueue::RequestQueue(const SearchServer& search_server)
     : search_server_(search_server)
 {
@@ -21,6 +22,7 @@ std::vector<Document> RequestQueue::AddFindRequest(const std::string& raw_query)
     return found_documents;
 }
 
+//Данную функцию можно переместить в хэдер и сделать noexcept и inline
 int RequestQueue::GetNoResultRequests() const {
     return no_result_count_;
 }
