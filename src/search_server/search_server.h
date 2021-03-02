@@ -41,26 +41,11 @@ public:
         DocumentStatus status_to_find = DocumentStatus::ACTUAL
     ) const;
 
-    //В классе должно быть только объЯвление, определение должно быть после тела класса
     template <typename DocumentPredicate>
     std::vector<Document> FindTopDocuments(
         const std::string& raw_query,
         DocumentPredicate doc_predicate
-    ) const
-    {
-        const Query query = ThrowInvalidQuery(ParseQuery(raw_query));
-        auto matched_documents = FindAllDocuments(query, doc_predicate);
-        sort(matched_documents.begin(), matched_documents.end(),
-                [](const Document& lhs, const Document& rhs) {
-                return (std::abs(lhs.relevance - rhs.relevance) < 1e-6)
-                        ? lhs.rating > rhs.rating
-                        : lhs.relevance > rhs.relevance;
-                });
-        if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
-            matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
-        }
-        return matched_documents;
-    }
+    ) const;
 
 private:
     struct DocumentData {
@@ -104,71 +89,106 @@ private:
 
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
 
-    //В классе должно быть только объявление, определение должно быть после тела класса
     //Статические методы должны быть перед не статическими
     template <typename StringContainer>
-    static StringContainer ThrowInvalidWords(const StringContainer& words) {
-        return ThrowInvalidWords(
-            words,
-            [](const std::string& word){ return !IsValidWord(word); }
-        );
-    }
+    static StringContainer ThrowInvalidWords(const StringContainer& words);
 
-    //В классе должно быть только объявление, определение должно быть после тела класса
     //Статические методы должны быть перед не статическими
     template <typename StringContainer, typename WordPredicate>
     static StringContainer ThrowInvalidWords(const StringContainer& words,
-                                             WordPredicate word_predicate) {
-        for (const std::string& word : words) {
-            if (word_predicate(word)) {
-                throw std::invalid_argument("invalid word --> [" + word + ']');
-            }
-        }
-        return words;
-    }
+                                             WordPredicate word_predicate);
 
-    //В классе должно быть только объявление, определение должно быть после тела класса
     template <typename DocumentPredicate>
-    std::vector<Document> FindAllDocuments(
-        const Query& query,
-        DocumentPredicate predicate
-    ) const
-    {
-        std::map<int, double> document_to_relevance;
-        for (const std::string& word : query.plus_words) {
-            if (word_to_document_freqs_.count(word) == 0) {
-                continue;
-            }
-            const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
-            for (const auto& [document_id, term_freq] : word_to_document_freqs_.at(word)) {
-                if (predicate(document_id,
-                                documents_.at(document_id).status,
-                                documents_.at(document_id).rating)
-                )
-                {
-                    document_to_relevance[document_id] += term_freq*inverse_document_freq;
-                }
-            }
-        }
+    std::vector<Document> FindAllDocuments(const Query& query,
+                                           DocumentPredicate predicate) const;
+};
 
-        for (const std::string& word : query.minus_words) {
-            if (word_to_document_freqs_.count(word) == 0) {
-                continue;
-            }
-            for (const auto& [document_id, _] : word_to_document_freqs_.at(word)) {
-                document_to_relevance.erase(document_id);
-            }
-        }
+template <typename StringContainer>
+/*static*/ StringContainer SearchServer::ThrowInvalidWords(
+    const StringContainer& words
+)
+{
+    return ThrowInvalidWords(
+        words,
+        [](const std::string& word){ return !IsValidWord(word); }
+    );
+}
 
-        std::vector<Document> matched_documents;
-        for (const auto& [document_id, relevance] : document_to_relevance) {
-            matched_documents.push_back({
-                document_id,
-                relevance,
-                documents_.at(document_id).rating
-            });
+template <typename StringContainer, typename WordPredicate>
+/*static*/ StringContainer SearchServer::ThrowInvalidWords(
+    const StringContainer& words,
+    WordPredicate word_predicate
+)
+{
+    for (const std::string& word : words) {
+        if (word_predicate(word)) {
+            throw std::invalid_argument("invalid word --> [" + word + ']');
         }
-        return matched_documents;
+    }
+    return words;
+}
+
+
+
+template <typename DocumentPredicate>
+std::vector<Document> SearchServer::FindAllDocuments(
+    const Query& query,
+    DocumentPredicate predicate
+) const
+{
+    std::map<int, double> document_to_relevance;
+    for (const std::string& word : query.plus_words) {
+        if (word_to_document_freqs_.count(word) == 0) {
+            continue;
+        }
+        const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
+        for (const auto& [document_id, term_freq] : word_to_document_freqs_.at(word)) {
+            if (predicate(document_id,
+                            documents_.at(document_id).status,
+                            documents_.at(document_id).rating)
+            )
+            {
+                document_to_relevance[document_id] += term_freq*inverse_document_freq;
+            }
+        }
     }
 
-};
+    for (const std::string& word : query.minus_words) {
+        if (word_to_document_freqs_.count(word) == 0) {
+            continue;
+        }
+        for (const auto& [document_id, _] : word_to_document_freqs_.at(word)) {
+            document_to_relevance.erase(document_id);
+        }
+    }
+
+    std::vector<Document> matched_documents;
+    for (const auto& [document_id, relevance] : document_to_relevance) {
+        matched_documents.push_back({
+            document_id,
+            relevance,
+            documents_.at(document_id).rating
+        });
+    }
+    return matched_documents;
+}
+
+template <typename DocumentPredicate>
+std::vector<Document> SearchServer::FindTopDocuments(
+    const std::string& raw_query,
+    DocumentPredicate doc_predicate
+) const
+{
+    const Query query = ThrowInvalidQuery(ParseQuery(raw_query));
+    auto matched_documents = FindAllDocuments(query, doc_predicate);
+    sort(matched_documents.begin(), matched_documents.end(),
+            [](const Document& lhs, const Document& rhs) {
+            return (std::abs(lhs.relevance - rhs.relevance) < 1e-6)
+                    ? lhs.rating > rhs.rating
+                    : lhs.relevance > rhs.relevance;
+            });
+    if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
+        matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
+    }
+    return matched_documents;
+}
