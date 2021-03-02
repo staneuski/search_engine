@@ -3,7 +3,7 @@
 #include <vector>
 #include <utility>
 
-#include "../search_server/search_server.h"
+#include "search_server.h"
 
 template <typename InputIt>
 class IteratorRange {

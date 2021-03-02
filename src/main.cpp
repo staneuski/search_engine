@@ -4,8 +4,8 @@
 
 #include "iostream_helpers.h"
 #include "paginator.h"
-#include "request_queue/request_queue.h"
-#include "search_server/search_server.h"
+#include "request_queue.h"
+#include "search_server.h"
 
 void AddDocuments(SearchServer& search_server) {
     search_server.AddDocument(1, "funny pet and nasty rat", DocumentStatus::ACTUAL, {7, 2, 7});

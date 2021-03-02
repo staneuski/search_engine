@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
-#include "../document.h"
-#include "../string_processing/string_processing.h"
+#include "document.h"
+#include "string_processing.h"
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
