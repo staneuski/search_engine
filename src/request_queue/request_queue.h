@@ -13,11 +13,11 @@ public:
     {
     }
 
-    InputIt begin() const {
+    inline InputIt begin() const noexcept {
         return first_;
     }
 
-    InputIt end() const {
+    inline InputIt end() const noexcept {
         return last_;
     }
 
@@ -28,7 +28,10 @@ private:
 
 class RequestQueue {
 public:
-    explicit RequestQueue(const SearchServer& search_server);
+    explicit RequestQueue(const SearchServer& search_server)
+        : search_server_(search_server)
+    {
+    }
 
     template <typename DocumentPredicate>
     std::vector<Document> AddFindRequest(const std::string& raw_query,
@@ -46,7 +49,7 @@ public:
 
     std::vector<Document> AddFindRequest(const std::string& raw_query);
 
-    int GetNoResultRequests() const;
+    inline int GetNoResultRequests() const noexcept;
 
 private:
     const SearchServer& search_server_;
@@ -57,3 +60,7 @@ private:
 
     void UpdateRequestQueue(const bool is_empty);
 };
+
+int RequestQueue::GetNoResultRequests() const noexcept {
+    return no_result_count_;
+}

@@ -14,7 +14,12 @@ const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
 class SearchServer {
 public:
-    SearchServer();
+    SearchServer() = default;
+
+    explicit SearchServer(const std::string& stop_words_text)
+        : SearchServer(SplitIntoWords(stop_words_text))
+    {
+    }
 
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
@@ -22,9 +27,7 @@ public:
     {
     }
 
-    explicit SearchServer(const std::string& stop_words_text);
-
-    int GetDocumentCount() const;
+    int GetDocumentCount() const noexcept;
 
     int GetDocumentId(int index) const;
 
@@ -73,7 +76,8 @@ private:
 
     bool IsContainWord(const std::string& word) const;
 
-    bool IsWordContainId(const std::string& word, const int& document_id) const;
+    bool IsWordContainId(const std::string& word,
+                         const int& document_id) const;
 
     std::vector<std::string> SplitIntoWordsNoStop(const std::string& text) const;
 
@@ -103,11 +107,9 @@ private:
                                            DocumentPredicate predicate) const;
 };
 
+/*static*/
 template <typename StringContainer>
-/*static*/ StringContainer SearchServer::ThrowInvalidWords(
-    const StringContainer& words
-)
-{
+StringContainer SearchServer::ThrowInvalidWords(const StringContainer& words) {
     return ThrowInvalidWords(
         words,
         [](const std::string& word){ return !IsValidWord(word); }
@@ -115,11 +117,8 @@ template <typename StringContainer>
 }
 
 template <typename StringContainer, typename WordPredicate>
-/*static*/ StringContainer SearchServer::ThrowInvalidWords(
-    const StringContainer& words,
-    WordPredicate word_predicate
-)
-{
+StringContainer SearchServer::ThrowInvalidWords(const StringContainer& words,
+                                                WordPredicate word_predicate) {
     for (const std::string& word : words) {
         if (word_predicate(word)) {
             throw std::invalid_argument("invalid word --> [" + word + ']');
@@ -129,7 +128,29 @@ template <typename StringContainer, typename WordPredicate>
 }
 
 
+/*inline*/
+inline int SearchServer::GetDocumentCount() const noexcept {
+    return documents_.size();
+}
 
+inline int SearchServer::GetDocumentId(int index) const {
+    return documents_ids_.at(index);
+}
+
+inline bool SearchServer::IsStopWord(const std::string& word) const {
+    return stop_words_.count(word);
+}
+
+inline bool SearchServer::IsContainWord(const std::string& word) const {
+    return word_to_document_freqs_.count(word);
+}
+
+inline bool SearchServer::IsWordContainId(const std::string& word,
+                                          const int& document_id) const {
+    return word_to_document_freqs_.at(word).count(document_id);
+}
+
+/*templates*/
 template <typename DocumentPredicate>
 std::vector<Document> SearchServer::FindAllDocuments(
     const Query& query,

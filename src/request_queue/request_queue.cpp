@@ -1,11 +1,5 @@
 #include "request_queue.h"
 
-//Конструктор переместите в хэдер
-RequestQueue::RequestQueue(const SearchServer& search_server)
-    : search_server_(search_server)
-{
-}
-
 std::vector<Document> RequestQueue::AddFindRequest(
     const std::string& raw_query,
     DocumentStatus status
@@ -20,11 +14,6 @@ std::vector<Document> RequestQueue::AddFindRequest(const std::string& raw_query)
     const std::vector<Document> found_documents = search_server_.FindTopDocuments(raw_query);
     UpdateRequestQueue(found_documents.empty());
     return found_documents;
-}
-
-//Данную функцию можно переместить в хэдер и сделать noexcept и inline
-int RequestQueue::GetNoResultRequests() const {
-    return no_result_count_;
 }
 
 void RequestQueue::UpdateRequestQueue(const bool is_empty) {
