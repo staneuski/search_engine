@@ -3,7 +3,7 @@
 #include <vector>
 
 #include "iostream_helpers.h"
-#include "paginator/paginator.h"
+#include "paginator.h"
 #include "request_queue/request_queue.h"
 #include "search_server/search_server.h"
 
