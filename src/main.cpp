@@ -15,11 +15,8 @@
 
 //Не зачет. Нужно доработать. Удачи!
 
-//Как вы думаете почему std::cout и std::cin лежат в одной сборке? Не нужно делать разные хэдеры на 
-//outputs и inputs функции, лучше объедените их и назовите IOStreamHelpers
-#include "output_functions/output_functions.h"
+#include "iostream_helpers.h"
 #include "paginator/paginator.h"
-#include "read_input_functions/read_input_functions.h"
 #include "request_queue/request_queue.h"
 #include "search_server/search_server.h"
 
