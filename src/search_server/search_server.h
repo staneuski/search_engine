@@ -21,18 +21,22 @@ public:
     {
     }
 
+    int GetDocumentCount() const noexcept;
+
+    int GetDocumentId(int index) const;
+
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
         : stop_words_(ThrowInvalidWords(MakeUniqueNonEmptyStrings(stop_words)))
     {
     }
 
-    int GetDocumentCount() const noexcept;
-
-    int GetDocumentId(int index) const;
-
-    void AddDocument(int document_id, const std::string& document,
-                     DocumentStatus status, const std::vector<int>& ratings);
+    void AddDocument(
+        int document_id,
+        const std::string& document,
+        DocumentStatus status,
+        const std::vector<int>& ratings
+    );
 
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(
         const std::string& raw_query,
@@ -72,6 +76,17 @@ private:
 
     static bool IsValidWord(const std::string& word);
 
+    static int ComputeAverageRating(const std::vector<int>& ratings);
+
+    static Query ThrowInvalidQuery(const Query& query);
+
+    template <typename StringContainer>
+    static StringContainer ThrowInvalidWords(const StringContainer& words);
+
+    template <typename StringContainer, typename WordPredicate>
+    static StringContainer ThrowInvalidWords(const StringContainer& words,
+                                             WordPredicate word_predicate);
+
     bool IsStopWord(const std::string& word) const;
 
     bool IsContainWord(const std::string& word) const;
@@ -81,31 +96,17 @@ private:
 
     std::vector<std::string> SplitIntoWordsNoStop(const std::string& text) const;
 
-    //Статические методы должны быть перед не статическими
-    static int ComputeAverageRating(const std::vector<int>& ratings);
-
     QueryWord ParseQueryWord(std::string word) const;
 
     Query ParseQuery(const std::string& text) const;
 
-    //Статические методы должны быть перед не статическими
-    static Query ThrowInvalidQuery(const Query& query);
-
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
-
-    //Статические методы должны быть перед не статическими
-    template <typename StringContainer>
-    static StringContainer ThrowInvalidWords(const StringContainer& words);
-
-    //Статические методы должны быть перед не статическими
-    template <typename StringContainer, typename WordPredicate>
-    static StringContainer ThrowInvalidWords(const StringContainer& words,
-                                             WordPredicate word_predicate);
 
     template <typename DocumentPredicate>
     std::vector<Document> FindAllDocuments(const Query& query,
                                            DocumentPredicate predicate) const;
 };
+
 
 /*static*/
 template <typename StringContainer>
@@ -149,6 +150,7 @@ inline bool SearchServer::IsWordContainId(const std::string& word,
                                           const int& document_id) const {
     return word_to_document_freqs_.at(word).count(document_id);
 }
+
 
 /*templates*/
 template <typename DocumentPredicate>

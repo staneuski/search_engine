@@ -1,8 +1,10 @@
 #include "search_server.h"
 
 void SearchServer::AddDocument(
-    int document_id, const std::string& document,
-    DocumentStatus status, const std::vector<int>& ratings
+    int document_id,
+    const std::string& document,
+    DocumentStatus status,
+    const std::vector<int>& ratings
 )
 {
     if (count(documents_ids_.begin(), documents_ids_.end(), document_id)) {
@@ -131,7 +133,10 @@ SearchServer::Query SearchServer::ThrowInvalidQuery(const Query& query) {
     return query;
 }
 
-double SearchServer::ComputeWordInverseDocumentFreq(const std::string& word) const {
+double SearchServer::ComputeWordInverseDocumentFreq(
+    const std::string& word
+) const
+{
     return (word_to_document_freqs_.at(word).size())
             ? log(static_cast<double>(GetDocumentCount())/word_to_document_freqs_.at(word).size())
             : 0;
