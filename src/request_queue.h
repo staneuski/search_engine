@@ -60,6 +60,7 @@ private:
     void UpdateRequestQueue(const bool is_empty);
 };
 
+//Не шаблонные функции лучше размещать в теле класа. Их обычно не выносят. Выносят только шаблонные.
 int RequestQueue::GetNoResultRequests() const noexcept {
     return no_result_count_;
 }

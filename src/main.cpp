@@ -7,6 +7,8 @@
 #include "request_queue.h"
 #include "search_server.h"
 
+//Зачет. Есть небольшие замечания, но не критичные. Учтите на будущее.
+
 void AddDocuments(SearchServer& search_server) {
     search_server.AddDocument(1, "funny pet and nasty rat", DocumentStatus::ACTUAL, {7, 2, 7});
     search_server.AddDocument(2, "funny pet with curly hair", DocumentStatus::ACTUAL, {4, 2, 3});

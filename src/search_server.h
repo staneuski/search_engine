@@ -130,6 +130,8 @@ StringContainer SearchServer::ThrowInvalidWords(const StringContainer& words,
 
 
 /*inline*/
+//Не шаблонные функции лучше размещать в теле класа. Их обычно не выносят. Выносят только шаблонные.
+//Так же модификатор inline нужно объявлять в классе
 inline int SearchServer::GetDocumentCount() const noexcept {
     return documents_.size();
 }
