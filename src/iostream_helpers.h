@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "document/document.h"
+#include "document.h"
 #include "request_queue/request_queue.h"
 
 /* --------------------------------- Input --------------------------------- */
