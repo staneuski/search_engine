@@ -49,7 +49,9 @@ public:
 
     std::vector<Document> AddFindRequest(const std::string& raw_query);
 
-    inline int GetNoResultRequests() const noexcept;
+    inline int GetNoResultRequests() const noexcept {
+        return no_result_count_;
+    }
 
 private:
     const static int sec_in_day_ = 1440;
@@ -59,8 +61,3 @@ private:
 
     void UpdateRequestQueue(const bool is_empty);
 };
-
-//Не шаблонные функции лучше размещать в теле класа. Их обычно не выносят. Выносят только шаблонные.
-int RequestQueue::GetNoResultRequests() const noexcept {
-    return no_result_count_;
-}

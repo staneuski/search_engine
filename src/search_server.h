@@ -21,14 +21,18 @@ public:
     {
     }
 
-    int GetDocumentCount() const noexcept;
-
-    int GetDocumentId(int index) const;
-
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
         : stop_words_(ThrowInvalidWords(MakeUniqueNonEmptyStrings(stop_words)))
     {
+    }
+
+    inline int GetDocumentCount() const noexcept {
+        return documents_.size();
+    }
+
+    inline int GetDocumentId(int index) const {
+        return documents_ids_.at(index);
     }
 
     void AddDocument(
@@ -87,12 +91,18 @@ private:
     static StringContainer ThrowInvalidWords(const StringContainer& words,
                                              WordPredicate word_predicate);
 
-    bool IsStopWord(const std::string& word) const;
+    inline bool IsStopWord(const std::string& word) const {
+        return stop_words_.count(word);
+    }
 
-    bool IsContainWord(const std::string& word) const;
+    inline bool IsContainWord(const std::string& word) const {
+        return word_to_document_freqs_.count(word);
+    }
 
-    bool IsWordContainId(const std::string& word,
-                         const int& document_id) const;
+    inline bool IsWordContainId(const std::string& word,
+                                const int& document_id) const {
+        return word_to_document_freqs_.at(word).count(document_id);
+    }
 
     std::vector<std::string> SplitIntoWordsNoStop(const std::string& text) const;
 
@@ -108,7 +118,6 @@ private:
 };
 
 
-/*static*/
 template <typename StringContainer>
 StringContainer SearchServer::ThrowInvalidWords(const StringContainer& words) {
     return ThrowInvalidWords(
@@ -129,32 +138,6 @@ StringContainer SearchServer::ThrowInvalidWords(const StringContainer& words,
 }
 
 
-/*inline*/
-//Не шаблонные функции лучше размещать в теле класа. Их обычно не выносят. Выносят только шаблонные.
-//Так же модификатор inline нужно объявлять в классе
-inline int SearchServer::GetDocumentCount() const noexcept {
-    return documents_.size();
-}
-
-inline int SearchServer::GetDocumentId(int index) const {
-    return documents_ids_.at(index);
-}
-
-inline bool SearchServer::IsStopWord(const std::string& word) const {
-    return stop_words_.count(word);
-}
-
-inline bool SearchServer::IsContainWord(const std::string& word) const {
-    return word_to_document_freqs_.count(word);
-}
-
-inline bool SearchServer::IsWordContainId(const std::string& word,
-                                          const int& document_id) const {
-    return word_to_document_freqs_.at(word).count(document_id);
-}
-
-
-/*templates*/
 template <typename DocumentPredicate>
 std::vector<Document> SearchServer::FindAllDocuments(
     const Query& query,
