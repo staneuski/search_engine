@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "paginator.h"
+#include "remove_duplicates.h"
 #include "request_queue.h"
 #include "search_server.h"
 
@@ -132,11 +133,11 @@ TEST(SearchServer, FindTopDocumentsByUserPredicate) {
 
 TEST(SearchServer, TF_ITF) {
     SearchServer search_server;
-    search_server.AddDocument(100, "white stily cat with ball"s, DocumentStatus::ACTUAL, {0});
-    search_server.AddDocument(101, "cat with thin tail"s, DocumentStatus::ACTUAL, {0});
-    search_server.AddDocument(102, "dog with sunglasses"s, DocumentStatus::ACTUAL, {0});
-    search_server.AddDocument(103, "snake without tooth"s, DocumentStatus::IRRELEVANT, {0});
-    search_server.AddDocument(104, "long fat snake"s, DocumentStatus::BANNED, {0});
+    search_server.AddDocument(100, "white stily cat with ball", DocumentStatus::ACTUAL, {0});
+    search_server.AddDocument(101, "cat with thin tail", DocumentStatus::ACTUAL, {0});
+    search_server.AddDocument(102, "dog with sunglasses", DocumentStatus::ACTUAL, {0});
+    search_server.AddDocument(103, "snake without tooth", DocumentStatus::IRRELEVANT, {0});
+    search_server.AddDocument(104, "long fat snake", DocumentStatus::BANNED, {0});
 
     std::map<int, double> id_to_found_relevance;
     for (const Document& doc : search_server.FindTopDocuments("cat with ball")) {
@@ -151,6 +152,17 @@ TEST(SearchServer, TF_ITF) {
 
     ASSERT_EQ(id_to_expected_relevance, id_to_found_relevance)
         << "FindAllDocuments() must calculate relevance using the TF-ITF method";
+}
+
+// /* ---------------------------- RemoveDuplicates --------------------------- */
+
+TEST(RemoveDuplicates, RemoveDuplicates) {
+    SearchServer search_server;
+    AddDocuments(search_server);
+    // RemoveDuplicates(search_server);
+
+    ASSERT_EQ(search_server.GetDocumentCount(), 10)
+        << "Duplicated documents must be excluded from the search server";
 }
 
 
