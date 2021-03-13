@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "iostream_helpers.h"
+#include "log_duration.h"
 #include "paginator.h"
 #include "request_queue.h"
 #include "search_server.h"
@@ -22,6 +23,7 @@ int main() {
 
     /* ----------------------------- Paginate ------------------------------ */
     {
+        LOG_DURATION("curly dog", cerr);
         SearchServer search_server("and at on in"s);
         AddDocuments(search_server);
         const vector<Document> search_results = search_server.FindTopDocuments(
