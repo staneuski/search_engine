@@ -65,7 +65,9 @@ std::vector<Document> SearchServer::FindTopDocuments(
 {
     return FindTopDocuments(
         raw_query,
-        [status_to_find](int document_id, DocumentStatus status, int rating) {
+        [status_to_find](__attribute__((unused)) int document_id,
+                        DocumentStatus status,
+                        __attribute__((unused)) int rating) {
             return status == status_to_find;
         }
     );

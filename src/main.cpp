@@ -47,7 +47,9 @@ int main() {
         for (int i = 0; i < 1439; ++i) {
             request_queue.AddFindRequest("empty request"s);
         }
-        auto is_id_even = [](int document_id, DocumentStatus status, int rating) {
+        auto is_id_even = [](int document_id,
+                             __attribute__((unused)) DocumentStatus status,
+                             __attribute__((unused)) int rating) {
             return document_id % 2 == 0;
         };
         request_queue.AddFindRequest("curly dog"s, is_id_even);
