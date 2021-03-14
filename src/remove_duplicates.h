@@ -1,4 +1,6 @@
 #pragma once
+#include <algorithm>
+#include <iostream>
 
 #include "search_server.h"
 

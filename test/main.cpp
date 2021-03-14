@@ -195,14 +195,21 @@ TEST(SearchServer, GetWordFrequencies) {
 
 // /* ---------------------------- RemoveDuplicates --------------------------- */
 
-/*TEST(RemoveDuplicates, RemoveDuplicates) {
-    SearchServer search_server;
+TEST(RemoveDuplicates, RemoveDuplicates) {
+    SearchServer search_server("and with"s);
     AddDocuments(search_server);
     RemoveDuplicates(search_server);
 
-    ASSERT_EQ(search_server.GetDocumentCount(), 10)
+    std::vector<int> documents_ids;
+    documents_ids.reserve(search_server.GetDocumentCount());
+    copy(
+        search_server.begin(), search_server.end(),
+        std::back_inserter(documents_ids)
+    );
+
+    ASSERT_EQ(std::vector<int>({1, 2, 3, 4, 5, 6, 7, 11, 13, 14}), documents_ids)
         << "Duplicated documents must be excluded from the search server";
-}*/
+}
 
 
 /* ------------------------------- Paginator ------------------------------- */

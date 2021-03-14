@@ -20,16 +20,16 @@ void AddDocuments(SearchServer& search_server) {
     // [(~= 1) --> False] множество слов такое же
     search_server.AddDocument(5, "funny funny pet and nasty nasty rat", DocumentStatus::ACTUAL, {0, 3});
 
-    // [(!= 11) --> True] добавились новые слова, дубликатом не является
+    // [(!= 6) --> True] добавились новые слова, дубликатом не является
     search_server.AddDocument(6, "funny pet and not very nasty rat", DocumentStatus::ACTUAL, {1, 1, 2});
 
-    // [(~= 11) --> False] множество слов такое же, несмотря на другой порядок, считаем дубликатом
+    // [(~= 6) --> False] множество слов такое же, несмотря на другой порядок, считаем дубликатом
     search_server.AddDocument(7, "very nasty rat and not very funny pet", DocumentStatus::ACTUAL, {3});
 
-    // [(< 11) --> True] есть не все слова, не является дубликатом
+    // [(< 6) --> True] есть не все слова, не является дубликатом
     search_server.AddDocument(8, "pet with rat and rat and rat", DocumentStatus::ACTUAL, {1, 0, -1});
 
-    // [(!= 1)(!= 2)(!= 11) --> True] слова из разных документов, не является дубликатом
+    // [(!= 1)(!= 2)(!= 6) --> True] слова из разных документов, не является дубликатом
     search_server.AddDocument(9, "nasty rat with curly hair", DocumentStatus::ACTUAL, {3, 2});
 }
 
@@ -40,14 +40,12 @@ int main() {
     SearchServer search_server("and with"s);
     AddDocuments(search_server);
 
-    cout << search_server.GetWordFrequencies(5) << endl;
-
     cout << "Before duplicates removed: "
          << search_server.GetDocumentCount() << endl;
 
-    /* RemoveDuplicates(search_server);
+    RemoveDuplicates(search_server);
     cout << "After duplicates removed: "
-         << search_server.GetDocumentCount() << endl;*/
+         << search_server.GetDocumentCount() << endl;
 
     return 0;
 }
