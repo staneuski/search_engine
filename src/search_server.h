@@ -27,13 +27,19 @@ public:
     {
     }
 
+    inline auto begin() const noexcept {
+        return documents_ids_.begin();
+    }
+
+    inline auto end() const noexcept {
+        return documents_ids_.end();
+    }
+
     inline int GetDocumentCount() const noexcept {
         return documents_.size();
     }
 
-    inline int GetDocumentId(int index) const {
-        return documents_ids_.at(index);
-    }
+    const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
 
     void AddDocument(
         int document_id,
@@ -41,6 +47,8 @@ public:
         DocumentStatus status,
         const std::vector<int>& ratings
     );
+
+    void RemoveDocument(int document_id);
 
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(
         const std::string& raw_query,
@@ -60,8 +68,9 @@ public:
 
 private:
     struct DocumentData {
-        int rating;
+        std::set<std::string> words;
         DocumentStatus status;
+        int rating;
     };
     struct QueryWord {
         std::string data;
@@ -75,6 +84,7 @@ private:
 
     const std::set<std::string> stop_words_ = {};
     std::map<std::string, std::map<int, double>> word_to_document_freqs_;
+    std::map<int, std::map<std::string, double>> document_to_word_freqs_;
     std::map<int, DocumentData> documents_;
     std::vector<int> documents_ids_;
 
@@ -111,6 +121,8 @@ private:
     Query ParseQuery(const std::string& text) const;
 
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
+
+    void UpdateInverseDocumentFreqs();
 
     template <typename DocumentPredicate>
     std::vector<Document> FindAllDocuments(const Query& query,
@@ -152,8 +164,8 @@ std::vector<Document> SearchServer::FindAllDocuments(
         const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
         for (const auto& [document_id, term_freq] : word_to_document_freqs_.at(word)) {
             if (predicate(document_id,
-                            documents_.at(document_id).status,
-                            documents_.at(document_id).rating)
+                          documents_.at(document_id).status,
+                          documents_.at(document_id).rating)
             )
             {
                 document_to_relevance[document_id] += term_freq*inverse_document_freq;
