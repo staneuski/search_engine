@@ -39,6 +39,8 @@ public:
         return documents_.size();
     }
 
+    const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
+
     void AddDocument(
         int document_id,
         const std::string& document,
@@ -64,8 +66,9 @@ public:
 
 private:
     struct DocumentData {
-        int rating;
+        std::set<std::string> words;
         DocumentStatus status;
+        int rating;
     };
     struct QueryWord {
         std::string data;
@@ -79,6 +82,7 @@ private:
 
     const std::set<std::string> stop_words_ = {};
     std::map<std::string, std::map<int, double>> word_to_document_freqs_;
+    std::map<int, std::map<std::string, double>> document_to_word_freqs_;
     std::map<int, DocumentData> documents_;
     std::vector<int> documents_ids_;
 
@@ -115,6 +119,8 @@ private:
     Query ParseQuery(const std::string& text) const;
 
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
+
+    void UpdateInverseDocumentFreqs();
 
     template <typename DocumentPredicate>
     std::vector<Document> FindAllDocuments(const Query& query,

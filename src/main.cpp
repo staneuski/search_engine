@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 
-// #include "iostream_helpers.h"
+#include "iostream_helpers.h"
 #include "log_duration.h"
 #include "remove_duplicates.h"
 #include "search_server.h"
@@ -37,11 +37,14 @@ void AddDocuments(SearchServer& search_server) {
 int main() {
     using namespace std;
 
-    SearchServer search_server;
+    SearchServer search_server("and with"s);
     AddDocuments(search_server);
+
+    cout << search_server.GetWordFrequencies(5) << endl;
 
     cout << "Before duplicates removed: "
          << search_server.GetDocumentCount() << endl;
+
     /* RemoveDuplicates(search_server);
     cout << "After duplicates removed: "
          << search_server.GetDocumentCount() << endl;*/

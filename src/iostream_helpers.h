@@ -50,6 +50,12 @@ std::ostream& operator<<(std::ostream& out, const Document& document) {
     return out;
 }
 
+template <typename T, typename S>
+std::ostream& operator<<(std::ostream& out, const std::pair<T, S>& p) {
+    out << p.first << ": " << p.second;
+    return out;
+}
+
 template <typename T>
 std::ostream& Print(std::ostream& out, const T& container,
                     const std::string& delimeter = ", ") {
@@ -65,7 +71,6 @@ std::ostream& Print(std::ostream& out, const T& container,
     return out;
 }
 
-
 std::ostream& operator<<(std::ostream& out,
                          const std::vector<Document>& documents) {
     using namespace std::string_literals;
@@ -78,12 +83,6 @@ std::ostream& operator<<(std::ostream& out,
     for (auto it = iterator_range.begin(); it != iterator_range.end(); ++it) {
         out << *it;
     }
-    return out;
-}
-
-template <typename T, typename S>
-std::ostream& operator<<(std::ostream& out, const std::pair<T, S>& p) {
-    out << p.first << ": " << p.second;
     return out;
 }
 

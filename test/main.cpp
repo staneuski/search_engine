@@ -154,6 +154,24 @@ TEST(SearchServer, TF_ITF) {
         << "FindAllDocuments() must calculate relevance using the TF-ITF method";
 }
 
+TEST(SearchServer, GetWordFrequencies) {
+    SearchServer search_server("fat"s);
+    AddDocuments(search_server);
+
+    std::vector<std::string> found_words;
+    std::vector<double> found_freqs;
+    for (const auto& [word, freq] : search_server.GetWordFrequencies(7)) {
+        found_words.push_back(word);
+        found_freqs.push_back(freq);
+    }
+
+    ASSERT_EQ(std::vector<std::string>({"long", "snake"}), found_words);
+    ASSERT_EQ(
+        std::vector<double>({2.6390573296152584, 1.9459101490553132}),
+        found_freqs
+    );
+}
+
 // /* ---------------------------- RemoveDuplicates --------------------------- */
 
 TEST(RemoveDuplicates, RemoveDuplicates) {
@@ -214,6 +232,9 @@ TEST(RequestQueue, RequestQueue) {
 
 
 int main(int argc, char **argv) {
+    SearchServer search_server("and with"s);
+    AddDocuments(search_server);
+
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
