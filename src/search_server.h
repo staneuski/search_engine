@@ -27,12 +27,16 @@ public:
     {
     }
 
-    inline int GetDocumentCount() const noexcept {
-        return documents_.size();
+    inline auto begin() const noexcept {
+        return documents_ids_.begin();
     }
 
-    inline int GetDocumentId(int index) const {
-        return documents_ids_.at(index);
+    inline auto end() const noexcept {
+        return documents_ids_.end();
+    }
+
+    inline int GetDocumentCount() const noexcept {
+        return documents_.size();
     }
 
     void AddDocument(
@@ -152,8 +156,8 @@ std::vector<Document> SearchServer::FindAllDocuments(
         const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
         for (const auto& [document_id, term_freq] : word_to_document_freqs_.at(word)) {
             if (predicate(document_id,
-                            documents_.at(document_id).status,
-                            documents_.at(document_id).rating)
+                          documents_.at(document_id).status,
+                          documents_.at(document_id).rating)
             )
             {
                 document_to_relevance[document_id] += term_freq*inverse_document_freq;

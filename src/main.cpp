@@ -40,9 +40,11 @@ int main() {
     SearchServer search_server;
     AddDocuments(search_server);
 
-    cout << "Before duplicates removed: "s << search_server.GetDocumentCount() << endl;
-    // RemoveDuplicates(search_server);
-    cout << "After duplicates removed: "s << search_server.GetDocumentCount() << endl;
+    cout << "Before duplicates removed: "
+         << search_server.GetDocumentCount() << endl;
+    /* RemoveDuplicates(search_server);
+    cout << "After duplicates removed: "
+         << search_server.GetDocumentCount() << endl;*/
 
     return 0;
 }
