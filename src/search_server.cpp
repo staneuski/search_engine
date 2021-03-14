@@ -1,5 +1,4 @@
 #include "search_server.h"
-#include <iostream>
 
 const std::map<std::string, double>& SearchServer::GetWordFrequencies(
     int document_id
@@ -31,7 +30,7 @@ void SearchServer::AddDocument(
     for (const std::string& word : words) {
         word_to_document_freqs_[word][document_id] += inv_word_count;
     }
-    documents_ids_.push_back(document_id);
+
     documents_.emplace(
         document_id,
         DocumentData{
@@ -39,6 +38,21 @@ void SearchServer::AddDocument(
             status,
             ComputeAverageRating(ratings)
         }
+    );
+    documents_ids_.push_back(document_id);
+
+    UpdateInverseDocumentFreqs();
+}
+
+void SearchServer::RemoveDocument(int document_id) {
+    for (const std::string& word : documents_.at(document_id).words) {
+        word_to_document_freqs_.at(word).erase(document_id);
+    }
+
+    documents_.erase(documents_.find(document_id));
+    documents_ids_.erase(
+        remove(documents_ids_.begin(), documents_ids_.end(), document_id),
+        documents_ids_.end()
     );
 
     UpdateInverseDocumentFreqs();

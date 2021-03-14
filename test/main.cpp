@@ -1,3 +1,5 @@
+#include <numeric>
+
 #include <gtest/gtest.h>
 
 #include "paginator.h"
@@ -55,6 +57,25 @@ TEST(SearchServer, AddDocument) {
 
     ASSERT_FALSE(search_server.FindTopDocuments("funny").empty())
         << "AddDocument() must add documents";
+}
+
+TEST(SearchServer, RemoveDocument) {
+    SearchServer search_server;
+    AddDocuments(search_server);
+
+    const int last_id = search_server.GetDocumentCount();
+
+    std::vector<int> expected_ids(last_id - 1);
+    std::iota(expected_ids.begin(), expected_ids.end(), 1);
+
+    search_server.RemoveDocument(last_id);
+
+    std::vector<int> found_ids;
+    for (int id : search_server)
+        found_ids.push_back(id);
+
+    ASSERT_EQ(expected_ids, found_ids);
+    ASSERT_EQ(last_id - 1, search_server.GetDocumentCount());
 }
 
 TEST(SearchServer, ParseQuery) {
@@ -174,14 +195,14 @@ TEST(SearchServer, GetWordFrequencies) {
 
 // /* ---------------------------- RemoveDuplicates --------------------------- */
 
-TEST(RemoveDuplicates, RemoveDuplicates) {
+/*TEST(RemoveDuplicates, RemoveDuplicates) {
     SearchServer search_server;
     AddDocuments(search_server);
-    // RemoveDuplicates(search_server);
+    RemoveDuplicates(search_server);
 
     ASSERT_EQ(search_server.GetDocumentCount(), 10)
         << "Duplicated documents must be excluded from the search server";
-}
+}*/
 
 
 /* ------------------------------- Paginator ------------------------------- */
@@ -232,9 +253,6 @@ TEST(RequestQueue, RequestQueue) {
 
 
 int main(int argc, char **argv) {
-    SearchServer search_server("and with"s);
-    AddDocuments(search_server);
-
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
