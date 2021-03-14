@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wextra -Werror)
 
 set(SRC
+    src/remove_duplicates.cpp
     src/request_queue.cpp
     src/search_server.cpp
     src/string_processing.cpp)

@@ -1,6 +1,9 @@
+#include <numeric>
+
 #include <gtest/gtest.h>
 
 #include "paginator.h"
+#include "remove_duplicates.h"
 #include "request_queue.h"
 #include "search_server.h"
 
@@ -54,6 +57,25 @@ TEST(SearchServer, AddDocument) {
 
     ASSERT_FALSE(search_server.FindTopDocuments("funny").empty())
         << "AddDocument() must add documents";
+}
+
+TEST(SearchServer, RemoveDocument) {
+    SearchServer search_server;
+    AddDocuments(search_server);
+
+    const int last_id = search_server.GetDocumentCount();
+
+    std::vector<int> expected_ids(last_id - 1);
+    std::iota(expected_ids.begin(), expected_ids.end(), 1);
+
+    search_server.RemoveDocument(last_id);
+
+    std::vector<int> found_ids;
+    for (int id : search_server)
+        found_ids.push_back(id);
+
+    ASSERT_EQ(expected_ids, found_ids);
+    ASSERT_EQ(last_id - 1, search_server.GetDocumentCount());
 }
 
 TEST(SearchServer, ParseQuery) {
@@ -132,11 +154,11 @@ TEST(SearchServer, FindTopDocumentsByUserPredicate) {
 
 TEST(SearchServer, TF_ITF) {
     SearchServer search_server;
-    search_server.AddDocument(100, "white stily cat with ball"s, DocumentStatus::ACTUAL, {0});
-    search_server.AddDocument(101, "cat with thin tail"s, DocumentStatus::ACTUAL, {0});
-    search_server.AddDocument(102, "dog with sunglasses"s, DocumentStatus::ACTUAL, {0});
-    search_server.AddDocument(103, "snake without tooth"s, DocumentStatus::IRRELEVANT, {0});
-    search_server.AddDocument(104, "long fat snake"s, DocumentStatus::BANNED, {0});
+    search_server.AddDocument(100, "white stily cat with ball", DocumentStatus::ACTUAL, {0});
+    search_server.AddDocument(101, "cat with thin tail", DocumentStatus::ACTUAL, {0});
+    search_server.AddDocument(102, "dog with sunglasses", DocumentStatus::ACTUAL, {0});
+    search_server.AddDocument(103, "snake without tooth", DocumentStatus::IRRELEVANT, {0});
+    search_server.AddDocument(104, "long fat snake", DocumentStatus::BANNED, {0});
 
     std::map<int, double> id_to_found_relevance;
     for (const Document& doc : search_server.FindTopDocuments("cat with ball")) {
@@ -151,6 +173,42 @@ TEST(SearchServer, TF_ITF) {
 
     ASSERT_EQ(id_to_expected_relevance, id_to_found_relevance)
         << "FindAllDocuments() must calculate relevance using the TF-ITF method";
+}
+
+TEST(SearchServer, GetWordFrequencies) {
+    SearchServer search_server("fat"s);
+    AddDocuments(search_server);
+
+    std::vector<std::string> found_words;
+    std::vector<double> found_freqs;
+    for (const auto& [word, freq] : search_server.GetWordFrequencies(7)) {
+        found_words.push_back(word);
+        found_freqs.push_back(freq);
+    }
+
+    ASSERT_EQ(std::vector<std::string>({"long", "snake"}), found_words);
+    ASSERT_EQ(
+        std::vector<double>({2.6390573296152584, 1.9459101490553132}),
+        found_freqs
+    );
+}
+
+// /* ---------------------------- RemoveDuplicates --------------------------- */
+
+TEST(RemoveDuplicates, RemoveDuplicates) {
+    SearchServer search_server("and with"s);
+    AddDocuments(search_server);
+    RemoveDuplicates(search_server);
+
+    std::vector<int> documents_ids;
+    documents_ids.reserve(search_server.GetDocumentCount());
+    copy(
+        search_server.begin(), search_server.end(),
+        std::back_inserter(documents_ids)
+    );
+
+    ASSERT_EQ(std::vector<int>({1, 2, 3, 4, 5, 6, 7, 11, 13, 14}), documents_ids)
+        << "Duplicated documents must be excluded from the search server";
 }
 
 
