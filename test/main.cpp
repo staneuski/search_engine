@@ -78,6 +78,13 @@ TEST(SearchServer, RemoveDocument) {
     ASSERT_EQ(last_id - 1, search_server.GetDocumentCount());
 }
 
+TEST(SearchServer, RemoveDocumentByNonExistedId) {
+    SearchServer search_server;
+    AddDocuments(search_server);
+
+    EXPECT_THROW(search_server.RemoveDocument(1000), std::invalid_argument);
+}
+
 TEST(SearchServer, ParseQuery) {
     SearchServer search_server;
     AddDocuments(search_server);

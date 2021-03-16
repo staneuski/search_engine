@@ -16,7 +16,7 @@ void SearchServer::AddDocument(
     const std::vector<int>& ratings
 )
 {
-    if (count(documents_ids_.begin(), documents_ids_.end(), document_id)) {
+    if (documents_.count(document_id)) {
         throw std::invalid_argument(
             "already used id --> " + std::to_string(document_id)
         );
@@ -48,6 +48,12 @@ void SearchServer::AddDocument(
 }
 
 void SearchServer::RemoveDocument(int document_id) {
+    if (!documents_.count(document_id)) {
+        throw std::invalid_argument(
+            "non-existent document id --> " + std::to_string(document_id)
+        );
+    }
+
     for (const std::string& word : documents_.at(document_id).words) {
         word_to_document_freqs_.at(word).erase(document_id);
     }
