@@ -78,6 +78,13 @@ TEST(SearchServer, RemoveDocument) {
     ASSERT_EQ(last_id - 1, search_server.GetDocumentCount());
 }
 
+TEST(SearchServer, RemoveDocumentByNonExistedId) {
+    SearchServer search_server;
+    AddDocuments(search_server);
+
+    EXPECT_THROW(search_server.RemoveDocument(1000), std::invalid_argument);
+}
+
 TEST(SearchServer, ParseQuery) {
     SearchServer search_server;
     AddDocuments(search_server);
@@ -185,6 +192,8 @@ TEST(SearchServer, GetWordFrequencies) {
         found_words.push_back(word);
         found_freqs.push_back(freq);
     }
+
+    ASSERT_TRUE(search_server.GetWordFrequencies(1000).empty());
 
     ASSERT_EQ(std::vector<std::string>({"long", "snake"}), found_words);
     ASSERT_EQ(
