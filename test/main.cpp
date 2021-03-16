@@ -186,6 +186,8 @@ TEST(SearchServer, GetWordFrequencies) {
         found_freqs.push_back(freq);
     }
 
+    ASSERT_TRUE(search_server.GetWordFrequencies(1000).empty());
+
     ASSERT_EQ(std::vector<std::string>({"long", "snake"}), found_words);
     ASSERT_EQ(
         std::vector<double>({2.6390573296152584, 1.9459101490553132}),

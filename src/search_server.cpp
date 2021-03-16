@@ -3,7 +3,10 @@
 const std::map<std::string, double>& SearchServer::GetWordFrequencies(
     int document_id
 ) const {
-    return document_to_word_freqs_.at(document_id);
+    static std::map<std::string, double> document_to_empty_freqs;
+    return document_to_word_freqs_.count(document_id)
+           ? document_to_word_freqs_.at(document_id)
+           : document_to_empty_freqs;
 }
 
 void SearchServer::AddDocument(
