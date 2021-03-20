@@ -17,7 +17,7 @@ set(SRC
 # GOOGLE TESTS
 #######################################
 find_package(GTest REQUIRED)
-include_directories(test src ${GTEST_INCLUDE_DIRS})
+include_directories(test src GTest::Main ${GTEST_INCLUDE_DIRS})
 add_executable(gtests test/main.cpp ${SRC})
 
 
