@@ -82,7 +82,10 @@ TEST(SearchServer, RemoveDocumentByNonExistedId) {
     SearchServer search_server;
     AddDocuments(search_server);
 
-    EXPECT_THROW(search_server.RemoveDocument(1000), std::invalid_argument);
+    const int expected_count = search_server.GetDocumentCount();
+    search_server.RemoveDocument(1000);
+
+    ASSERT_EQ(expected_count, search_server.GetDocumentCount());
 }
 
 TEST(SearchServer, ParseQuery) {
