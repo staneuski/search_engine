@@ -3,7 +3,10 @@
 const std::map<std::string, double>& SearchServer::GetWordFrequencies(
     int document_id
 ) const {
-    return document_to_word_freqs_.at(document_id);
+    const static std::map<std::string, double> document_to_empty_freqs;
+    return document_to_word_freqs_.count(document_id)
+           ? document_to_word_freqs_.at(document_id)
+           : document_to_empty_freqs;
 }
 
 void SearchServer::AddDocument(
@@ -13,7 +16,7 @@ void SearchServer::AddDocument(
     const std::vector<int>& ratings
 )
 {
-    if (count(documents_ids_.begin(), documents_ids_.end(), document_id)) {
+    if (documents_.count(document_id)) {
         throw std::invalid_argument(
             "already used id --> " + std::to_string(document_id)
         );
@@ -45,17 +48,19 @@ void SearchServer::AddDocument(
 }
 
 void SearchServer::RemoveDocument(int document_id) {
-    for (const std::string& word : documents_.at(document_id).words) {
-        word_to_document_freqs_.at(word).erase(document_id);
+    if (documents_.count(document_id)) {
+        for (const std::string& word : documents_.at(document_id).words) {
+            word_to_document_freqs_.at(word).erase(document_id);
+        }
+
+        documents_.erase(document_id);
+        documents_ids_.erase(
+            remove(documents_ids_.begin(), documents_ids_.end(), document_id),
+            documents_ids_.end()
+        );
+
+        UpdateInverseDocumentFreqs();
     }
-
-    documents_.erase(documents_.find(document_id));
-    documents_ids_.erase(
-        remove(documents_ids_.begin(), documents_ids_.end(), document_id),
-        documents_ids_.end()
-    );
-
-    UpdateInverseDocumentFreqs();
 }
 
 std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument(
