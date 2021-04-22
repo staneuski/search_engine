@@ -4,7 +4,7 @@
 
 #include "iostream_helpers.h"
 #include "log_duration.h"
-#include "remove_duplicates.h"
+#include "process_queries.h"
 #include "search_server.h"
 
 void AddDocuments(SearchServer& search_server) {
@@ -40,12 +40,20 @@ int main() {
     SearchServer search_server("and with"s);
     AddDocuments(search_server);
 
-    cout << "Before duplicates removed: "
-         << search_server.GetDocumentCount() << endl;
+    const vector<string> queries = {
+        "nasty rat -not"s,
+        "not very funny nasty pet"s,
+        "curly hair"s
+    };
 
-    RemoveDuplicates(search_server);
-    cout << "After duplicates removed: "
-         << search_server.GetDocumentCount() << endl;
+    int query_no = 0;
+    for (
+        const auto& documents : ProcessQueries(search_server, queries)
+    ) {
+        cout << documents.size() << " documents for query ["
+             << queries[query_no++] << ']'
+             << endl;
+    }
 
     return 0;
 }

@@ -149,7 +149,6 @@ StringContainer SearchServer::ThrowInvalidWords(const StringContainer& words,
     return words;
 }
 
-
 template <typename DocumentPredicate>
 std::vector<Document> SearchServer::FindAllDocuments(
     const Query& query,
