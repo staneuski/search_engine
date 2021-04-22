@@ -34,6 +34,7 @@ add_test(NAME search_server
 # MAIN
 #######################################
 add_executable(main src/main.cpp ${SRC})
+target_compile_options(main PRIVATE -ltbb)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

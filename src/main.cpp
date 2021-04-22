@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 
+#include "document.h"
 #include "iostream_helpers.h"
 #include "log_duration.h"
 #include "process_queries.h"
@@ -54,6 +55,8 @@ int main() {
              << queries[query_no++] << ']'
              << endl;
     }
+
+    cout << "OK!" << endl;
 
     return 0;
 }
