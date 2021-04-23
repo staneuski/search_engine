@@ -45,33 +45,6 @@ void SearchServer::AddDocument(
     UpdateInverseDocumentFreqs();
 }
 
-std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument(
-    const std::string& raw_query,
-    int document_id
-) const
-{
-    const Query query = ThrowInvalidQuery(ParseQuery(raw_query));
-    std::vector<std::string> matched_words;
-    for (const std::string& word : query.plus_words) {
-        if (!IsContainWord(word)) {
-            continue;
-        }
-        if (IsWordContainId(word, document_id)) {
-            matched_words.push_back(word);
-        }
-    }
-    for (const std::string& word : query.minus_words) {
-        if (!IsContainWord(word)) {
-            continue;
-        }
-        if (IsWordContainId(word, document_id)) {
-            matched_words.clear();
-            break;
-        }
-    }
-    return {matched_words, documents_.at(document_id).status};
-}
-
 bool SearchServer::IsValidWord(const std::string& word) {
     return none_of(word.begin(), word.end(), [](char c) {
         return c >= '\0' && c < ' ';

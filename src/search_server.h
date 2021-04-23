@@ -49,10 +49,13 @@ public:
         const std::vector<int>& ratings
     );
 
-    std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(
+    inline std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(
         const std::string& raw_query,
         int document_id
-    ) const;
+    ) const
+    {
+        return MatchDocument(std::execution::seq, raw_query, document_id);
+    }
 
     inline void RemoveDocument(int document_id) {
         RemoveDocument(std::execution::seq, document_id);
@@ -71,6 +74,13 @@ public:
             { return status == status_to_find; }
         );
     }
+
+    template <typename ExecutionPolicy>
+    std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(
+        ExecutionPolicy&& execution_policy,
+        const std::string& raw_query,
+        int document_id
+    ) const;
 
     template <typename ExecutionPolicy>
     void RemoveDocument(ExecutionPolicy&& execution_policy, int document_id);
@@ -154,6 +164,38 @@ private:
     std::vector<Document> FindAllDocuments(const Query& query,
                                            DocumentPredicate predicate) const;
 };
+
+template<typename ExecutionPolicy>
+std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument(
+    ExecutionPolicy&& execution_policy,
+    const std::string& raw_query,
+    int document_id
+) const
+{
+    const Query query = ThrowInvalidQuery(
+        ParseQuery(execution_policy, raw_query)
+    );
+
+    std::vector<std::string> matched_words;
+    for (const std::string& word : query.plus_words) {
+        if (!IsContainWord(word))
+            continue;
+
+        if (IsWordContainId(word, document_id))
+            matched_words.push_back(word);
+    }
+    for (const std::string& word : query.minus_words) {
+        if (!IsContainWord(word))
+            continue;
+
+        if (IsWordContainId(word, document_id)) {
+            matched_words.clear();
+            break;
+        }
+    }
+    return {matched_words, documents_.at(document_id).status};
+}
+
 
 template<typename ExecutionPolicy>
 void SearchServer::RemoveDocument(

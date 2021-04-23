@@ -35,7 +35,6 @@ void AddDocuments(SearchServer& search_server) {
     search_server.AddDocument(9, "nasty rat with curly hair", DocumentStatus::ACTUAL, {3, 2});
 }
 
-
 int main() {
     using namespace std;
 
@@ -50,17 +49,17 @@ int main() {
         // 1 words for document 1
     }
 
-    /*{
+    {
         const auto [words, status] = search_server.MatchDocument(execution::seq, query, 2);
         cout << words.size() << " words for document 2" << endl;
         // 2 words for document 2
-    }*/
+    }
 
-    /*{
-        const auto [words, status] = search_server.MatchDocument(execution::par, query, 3);
-        cout << words.size() << " words for document 3" << endl;
-        // 0 words for document 3
-    }*/
+    {
+        const auto [words, status] = search_server.MatchDocument(execution::par, query, 8);
+        cout << words.size() << " words for document 8" << endl;
+        // 0 words for document 8
+    }
 
     return 0;
 }
