@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <cmath>
+#include <execution>
 #include <map>
 #include <set>
 #include <stdexcept>
@@ -48,8 +49,6 @@ public:
         const std::vector<int>& ratings
     );
 
-    void RemoveDocument(int document_id);
-
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(
         const std::string& raw_query,
         int document_id
@@ -59,6 +58,13 @@ public:
         const std::string& raw_query,
         DocumentStatus status_to_find = DocumentStatus::ACTUAL
     ) const;
+
+    inline void RemoveDocument(int document_id) {
+        RemoveDocument(std::execution::seq, document_id);
+    }
+
+    template <typename ExecutionPolicy>
+    void RemoveDocument(ExecutionPolicy&& execution_policy, int document_id);
 
     template <typename DocumentPredicate>
     std::vector<Document> FindTopDocuments(
@@ -94,13 +100,6 @@ private:
 
     static Query ThrowInvalidQuery(const Query& query);
 
-    template <typename StringContainer>
-    static StringContainer ThrowInvalidWords(const StringContainer& words);
-
-    template <typename StringContainer, typename WordPredicate>
-    static StringContainer ThrowInvalidWords(const StringContainer& words,
-                                             WordPredicate word_predicate);
-
     inline bool IsStopWord(const std::string& word) const {
         return stop_words_.count(word);
     }
@@ -122,13 +121,24 @@ private:
 
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
 
-    void UpdateInverseDocumentFreqs();
+    inline void UpdateInverseDocumentFreqs() {
+        UpdateInverseDocumentFreqs(std::execution::seq);
+    }
+
+    template <typename StringContainer>
+    static StringContainer ThrowInvalidWords(const StringContainer& words);
+
+    template <typename StringContainer, typename WordPredicate>
+    static StringContainer ThrowInvalidWords(const StringContainer& words,
+                                             WordPredicate word_predicate);
+
+    template<typename ExecutionPolicy>
+    void UpdateInverseDocumentFreqs(ExecutionPolicy&& excution_policy);
 
     template <typename DocumentPredicate>
     std::vector<Document> FindAllDocuments(const Query& query,
                                            DocumentPredicate predicate) const;
 };
-
 
 template <typename StringContainer>
 StringContainer SearchServer::ThrowInvalidWords(const StringContainer& words) {
@@ -146,6 +156,44 @@ StringContainer SearchServer::ThrowInvalidWords(const StringContainer& words,
             throw std::invalid_argument("invalid word --> [" + word + ']');
 
     return words;
+}
+
+template<typename ExecutionPolicy>
+void SearchServer::UpdateInverseDocumentFreqs(ExecutionPolicy&& excution_policy) {
+    std::for_each(
+        excution_policy,
+        documents_ids_.begin(),
+        documents_ids_.end(),
+        [&](const int documents_id){
+            for (const std::string& word : documents_.at(documents_id).words)
+                document_to_word_freqs_[documents_id][word] = ComputeWordInverseDocumentFreq(word);
+        }
+    );
+}
+
+template<typename ExecutionPolicy>
+void SearchServer::RemoveDocument(
+    ExecutionPolicy&& execution_policy,
+    int document_id
+) {
+    if (documents_.count(document_id)) {
+        std::for_each(
+            execution_policy,
+            documents_.at(document_id).words.begin(),
+            documents_.at(document_id).words.end(),
+            [&, document_id](const std::string& word) {
+                word_to_document_freqs_.at(word).erase(document_id);
+            }
+        );
+
+        documents_.erase(document_id);
+        documents_ids_.erase(
+            remove(execution_policy, documents_ids_.begin(), documents_ids_.end(), document_id),
+            documents_ids_.end()
+        );
+
+        UpdateInverseDocumentFreqs();
+    }
 }
 
 template <typename DocumentPredicate>

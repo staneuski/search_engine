@@ -46,21 +46,6 @@ void SearchServer::AddDocument(
     UpdateInverseDocumentFreqs();
 }
 
-void SearchServer::RemoveDocument(int document_id) {
-    if (documents_.count(document_id)) {
-        for (const std::string& word : documents_.at(document_id).words)
-            word_to_document_freqs_.at(word).erase(document_id);
-
-        documents_.erase(document_id);
-        documents_ids_.erase(
-            remove(documents_ids_.begin(), documents_ids_.end(), document_id),
-            documents_ids_.end()
-        );
-
-        UpdateInverseDocumentFreqs();
-    }
-}
-
 std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument(
     const std::string& raw_query,
     int document_id
@@ -171,10 +156,4 @@ double SearchServer::ComputeWordInverseDocumentFreq(
     return (word_to_document_freqs_.at(word).size())
             ? log(static_cast<double>(GetDocumentCount())/word_to_document_freqs_.at(word).size())
             : 0;
-}
-
-void SearchServer::UpdateInverseDocumentFreqs() {
-    for (int documents_id : documents_ids_)
-        for (const std::string& word : documents_.at(documents_id).words)
-            document_to_word_freqs_[documents_id][word] = ComputeWordInverseDocumentFreq(word);
 }
