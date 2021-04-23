@@ -54,13 +54,22 @@ public:
         int document_id
     ) const;
 
-    std::vector<Document> FindTopDocuments(
-        const std::string& raw_query,
-        DocumentStatus status_to_find = DocumentStatus::ACTUAL
-    ) const;
-
     inline void RemoveDocument(int document_id) {
         RemoveDocument(std::execution::seq, document_id);
+    }
+
+    inline std::vector<Document> FindTopDocuments(
+        const std::string& raw_query,
+        DocumentStatus status_to_find = DocumentStatus::ACTUAL
+    ) const
+    {
+        return FindTopDocuments(
+            raw_query,
+            [status_to_find](__attribute__((unused)) int document_id,
+                             DocumentStatus status,
+                             __attribute__((unused)) int rating)
+            { return status == status_to_find; }
+        );
     }
 
     template <typename ExecutionPolicy>
@@ -224,13 +233,13 @@ std::vector<Document> SearchServer::FindAllDocuments(
     }
 
     std::vector<Document> matched_documents;
-    for (const auto& [document_id, relevance] : document_to_relevance) {
+    for (const auto& [document_id, relevance] : document_to_relevance)
         matched_documents.push_back({
             document_id,
             relevance,
             documents_.at(document_id).rating
         });
-    }
+
     return matched_documents;
 }
 
