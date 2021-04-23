@@ -22,13 +22,11 @@ void RemoveDuplicates(SearchServer& search_server) {
 
         for (int inner_doc_id : search_server) {
             if (outer_doc_id == inner_doc_id
-                || binary_search(duplicate_ids.begin(), duplicate_ids.end(), outer_doc_id)) {
+                || binary_search(duplicate_ids.begin(), duplicate_ids.end(), outer_doc_id))
                 break;
-            }
 
-            if (IsKeysEqual(word_to_freq, search_server.GetWordFrequencies(inner_doc_id))) {
+            if (IsKeysEqual(word_to_freq, search_server.GetWordFrequencies(inner_doc_id)))
                 duplicate_ids.push_back(outer_doc_id);
-            }
         }
     }
 

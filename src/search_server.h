@@ -141,11 +141,10 @@ StringContainer SearchServer::ThrowInvalidWords(const StringContainer& words) {
 template <typename StringContainer, typename WordPredicate>
 StringContainer SearchServer::ThrowInvalidWords(const StringContainer& words,
                                                 WordPredicate word_predicate) {
-    for (const std::string& word : words) {
-        if (word_predicate(word)) {
+    for (const std::string& word : words)
+        if (word_predicate(word))
             throw std::invalid_argument("invalid word --> [" + word + ']');
-        }
-    }
+
     return words;
 }
 
@@ -157,28 +156,23 @@ std::vector<Document> SearchServer::FindAllDocuments(
 {
     std::map<int, double> document_to_relevance;
     for (const std::string& word : query.plus_words) {
-        if (word_to_document_freqs_.count(word) == 0) {
+        if (word_to_document_freqs_.count(word) == 0)
             continue;
-        }
+
         const double inverse_document_freq = ComputeWordInverseDocumentFreq(word);
-        for (const auto& [document_id, term_freq] : word_to_document_freqs_.at(word)) {
+        for (const auto& [document_id, term_freq] : word_to_document_freqs_.at(word))
             if (predicate(document_id,
                           documents_.at(document_id).status,
                           documents_.at(document_id).rating)
             )
-            {
                 document_to_relevance[document_id] += term_freq*inverse_document_freq;
-            }
-        }
     }
 
     for (const std::string& word : query.minus_words) {
-        if (word_to_document_freqs_.count(word) == 0) {
+        if (word_to_document_freqs_.count(word) == 0)
             continue;
-        }
-        for (const auto& [document_id, _] : word_to_document_freqs_.at(word)) {
+        for (const auto& [document_id, _] : word_to_document_freqs_.at(word))
             document_to_relevance.erase(document_id);
-        }
     }
 
     std::vector<Document> matched_documents;
@@ -206,8 +200,7 @@ std::vector<Document> SearchServer::FindTopDocuments(
                     ? lhs.rating > rhs.rating
                     : lhs.relevance > rhs.relevance;
             });
-    if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
+    if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT)
         matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
-    }
     return matched_documents;
 }

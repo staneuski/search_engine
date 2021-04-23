@@ -30,9 +30,8 @@ void SearchServer::AddDocument(
         SplitIntoWordsNoStop(document)
     );
     const double inv_word_count = 1.0/words.size();
-    for (const std::string& word : words) {
+    for (const std::string& word : words)
         word_to_document_freqs_[word][document_id] += inv_word_count;
-    }
 
     documents_.emplace(
         document_id,
@@ -49,9 +48,8 @@ void SearchServer::AddDocument(
 
 void SearchServer::RemoveDocument(int document_id) {
     if (documents_.count(document_id)) {
-        for (const std::string& word : documents_.at(document_id).words) {
+        for (const std::string& word : documents_.at(document_id).words)
             word_to_document_freqs_.at(word).erase(document_id);
-        }
 
         documents_.erase(document_id);
         documents_ids_.erase(
@@ -116,20 +114,19 @@ std::vector<std::string> SearchServer::SplitIntoWordsNoStop(
 ) const
 {
     std::vector<std::string> words;
-    for (const std::string& word : SplitIntoWords(text)) {
+    for (const std::string& word : SplitIntoWords(text))
         if (!IsStopWord(word)) {
             words.push_back(word);
         }
-    }
+
     return words;
 }
 
 int SearchServer::ComputeAverageRating(const std::vector<int>& ratings) {
     if (ratings.size()) {
         int rating_sum = 0;
-        for (const int rating : ratings) {
+        for (const int rating : ratings)
             rating_sum += rating;
-        }
         return rating_sum/static_cast<int>(ratings.size());
     } else {
         return 0;
@@ -177,9 +174,7 @@ double SearchServer::ComputeWordInverseDocumentFreq(
 }
 
 void SearchServer::UpdateInverseDocumentFreqs() {
-    for (int documents_id : documents_ids_) {
-        for (const std::string& word : documents_.at(documents_id).words) {
+    for (int documents_id : documents_ids_)
+        for (const std::string& word : documents_.at(documents_id).words)
             document_to_word_freqs_[documents_id][word] = ComputeWordInverseDocumentFreq(word);
-        }
-    }
 }

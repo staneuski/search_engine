@@ -12,10 +12,9 @@ std::set<std::string> MakeUniqueNonEmptyStrings(
 )
 {
     std::set<std::string> non_empty_strings;
-    for (const std::string& s : strings) {
-        if (!s.empty()) {
+    for (const std::string& s : strings)
+        if (!s.empty())
             non_empty_strings.insert(s);
-        }
-    }
+
     return non_empty_strings;
 }
