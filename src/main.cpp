@@ -42,22 +42,25 @@ int main() {
     SearchServer search_server("and with"s);
     AddDocuments(search_server);
 
-    const string query = "curly and funny"s;
+    const string query = "curly and funny -not";
 
-    auto report = [&search_server, &query] {
-        cout << search_server.GetDocumentCount() << " documents total, "
-             << search_server.FindTopDocuments(query).size() << " documents for query [" << query << ']' << endl;
-    };
-    report();
+    {
+        const auto [words, status] = search_server.MatchDocument(query, 1);
+        cout << words.size() << " words for document 1" << endl;
+        // 1 words for document 1
+    }
 
-    search_server.RemoveDocument(5);
-    report();
+    /*{
+        const auto [words, status] = search_server.MatchDocument(execution::seq, query, 2);
+        cout << words.size() << " words for document 2" << endl;
+        // 2 words for document 2
+    }*/
 
-    search_server.RemoveDocument(execution::seq, 1);
-    report();
-
-    search_server.RemoveDocument(execution::par, 2);
-    report();
+    /*{
+        const auto [words, status] = search_server.MatchDocument(execution::par, query, 3);
+        cout << words.size() << " words for document 3" << endl;
+        // 0 words for document 3
+    }*/
 
     return 0;
 }

@@ -108,18 +108,6 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(std::string word) const {
     return {word, is_minus, IsStopWord(word)};
 }
 
-SearchServer::Query SearchServer::ParseQuery(const std::string& text) const {
-    Query query;
-    for (const std::string& word : SplitIntoWords(text)) {
-        const QueryWord query_word = ParseQueryWord(word);
-        if (!query_word.is_stop && query_word.is_minus)
-            query.minus_words.insert(query_word.data);
-        else if (!query_word.is_stop)
-            query.plus_words.insert(query_word.data);
-    }
-    return query;
-}
-
 SearchServer::Query SearchServer::ThrowInvalidQuery(const Query& query) {
     ThrowInvalidWords(query.plus_words);
     ThrowInvalidWords(query.minus_words);

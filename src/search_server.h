@@ -126,13 +126,19 @@ private:
 
     QueryWord ParseQueryWord(std::string word) const;
 
-    Query ParseQuery(const std::string& text) const;
-
     double ComputeWordInverseDocumentFreq(const std::string& word) const;
+
+    inline Query ParseQuery(const std::string& text) const {
+        return ParseQuery(std::execution::seq, text);
+    }
 
     inline void UpdateInverseDocumentFreqs() {
         UpdateInverseDocumentFreqs(std::execution::seq);
     }
+
+    template<typename ExecutionPolicy>
+    Query ParseQuery(ExecutionPolicy&& execution_policy,
+                     const std::string& text) const;
 
     template <typename StringContainer>
     static StringContainer ThrowInvalidWords(const StringContainer& words);
@@ -148,6 +154,64 @@ private:
     std::vector<Document> FindAllDocuments(const Query& query,
                                            DocumentPredicate predicate) const;
 };
+
+template<typename ExecutionPolicy>
+void SearchServer::RemoveDocument(
+    ExecutionPolicy&& execution_policy,
+    int document_id
+) {
+    if (documents_.count(document_id)) {
+        std::for_each(
+            execution_policy,
+            documents_.at(document_id).words.begin(),
+            documents_.at(document_id).words.end(),
+            [&, document_id](const std::string& word) {
+                word_to_document_freqs_.at(word).erase(document_id);
+            }
+        );
+
+        documents_.erase(document_id);
+        documents_ids_.erase(
+            remove(execution_policy, documents_ids_.begin(), documents_ids_.end(), document_id),
+            documents_ids_.end()
+        );
+
+        UpdateInverseDocumentFreqs();
+    }
+}
+
+template <typename DocumentPredicate>
+std::vector<Document> SearchServer::FindTopDocuments(
+    const std::string& raw_query,
+    DocumentPredicate doc_predicate
+) const
+{
+    const Query query = ThrowInvalidQuery(ParseQuery(raw_query));
+    auto matched_documents = FindAllDocuments(query, doc_predicate);
+    sort(matched_documents.begin(), matched_documents.end(),
+            [](const Document& lhs, const Document& rhs) {
+            return (std::abs(lhs.relevance - rhs.relevance) < 1e-6)
+                    ? lhs.rating > rhs.rating
+                    : lhs.relevance > rhs.relevance;
+            });
+    if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT)
+        matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
+    return matched_documents;
+}
+
+template<typename ExecutionPolicy>
+SearchServer::Query SearchServer::ParseQuery(ExecutionPolicy&& excution_policy,
+                                             const std::string& text) const {
+    Query query;
+    for (const std::string& word : SplitIntoWords(excution_policy, text)) {
+        const QueryWord query_word = ParseQueryWord(word);
+        if (!query_word.is_stop && query_word.is_minus)
+            query.minus_words.insert(query_word.data);
+        else if (!query_word.is_stop)
+            query.plus_words.insert(query_word.data);
+    }
+    return query;
+}
 
 template <typename StringContainer>
 StringContainer SearchServer::ThrowInvalidWords(const StringContainer& words) {
@@ -178,31 +242,6 @@ void SearchServer::UpdateInverseDocumentFreqs(ExecutionPolicy&& excution_policy)
                 document_to_word_freqs_[documents_id][word] = ComputeWordInverseDocumentFreq(word);
         }
     );
-}
-
-template<typename ExecutionPolicy>
-void SearchServer::RemoveDocument(
-    ExecutionPolicy&& execution_policy,
-    int document_id
-) {
-    if (documents_.count(document_id)) {
-        std::for_each(
-            execution_policy,
-            documents_.at(document_id).words.begin(),
-            documents_.at(document_id).words.end(),
-            [&, document_id](const std::string& word) {
-                word_to_document_freqs_.at(word).erase(document_id);
-            }
-        );
-
-        documents_.erase(document_id);
-        documents_ids_.erase(
-            remove(execution_policy, documents_ids_.begin(), documents_ids_.end(), document_id),
-            documents_ids_.end()
-        );
-
-        UpdateInverseDocumentFreqs();
-    }
 }
 
 template <typename DocumentPredicate>
@@ -240,24 +279,5 @@ std::vector<Document> SearchServer::FindAllDocuments(
             documents_.at(document_id).rating
         });
 
-    return matched_documents;
-}
-
-template <typename DocumentPredicate>
-std::vector<Document> SearchServer::FindTopDocuments(
-    const std::string& raw_query,
-    DocumentPredicate doc_predicate
-) const
-{
-    const Query query = ThrowInvalidQuery(ParseQuery(raw_query));
-    auto matched_documents = FindAllDocuments(query, doc_predicate);
-    sort(matched_documents.begin(), matched_documents.end(),
-            [](const Document& lhs, const Document& rhs) {
-            return (std::abs(lhs.relevance - rhs.relevance) < 1e-6)
-                    ? lhs.rating > rhs.rating
-                    : lhs.relevance > rhs.relevance;
-            });
-    if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT)
-        matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
     return matched_documents;
 }
