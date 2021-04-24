@@ -40,3 +40,4 @@ add_test(NAME search_server COMMAND gtest-search_server)
 # BENCHMARKS
 #######################################
 add_executable(benchmark-search_server tests/benchmark-search_server.cpp ${SRC})
+add_executable(benchmark-string_processing tests/benchmark-string_processing.cpp ${SRC})
