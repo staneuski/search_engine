@@ -1,15 +1,33 @@
 #pragma once
 #include <algorithm>
 #include <execution>
+#include <random>
 #include <set>
 #include <string>
 #include <vector>
+
+std::string GenerateWord(std::mt19937& generator, int max_length);
+
+std::vector<std::string> GenerateDictionary(std::mt19937& generator,
+                                            int word_count, int max_length);
+
+std::string GenerateQuery(std::mt19937& generator,
+                          const std::vector<std::string>& dictionary,
+                          int max_word_count);
+
+std::vector<std::string> GenerateQueries(
+    std::mt19937& generator,
+    const std::vector<std::string>& dictionary,
+    int query_count,
+    int max_word_count
+);
 
 template <typename ExecutionPolicy>
 std::vector<std::string> SplitIntoWords(
     ExecutionPolicy&& execution_policy,
     const std::string& text
-) {
+)
+{
     std::vector<std::string> words{""};
     std::for_each(
         execution_policy,

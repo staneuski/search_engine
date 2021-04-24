@@ -13,7 +13,14 @@ set(SRC
     src/process_queries.cpp
     src/remove_duplicates.cpp
     src/request_queue.cpp
-    src/search_server.cpp)
+    src/search_server.cpp
+    src/string_processing.cpp)
+
+#######################################
+# SRC
+#######################################
+add_executable(main src/main.cpp ${SRC})
+
 
 #######################################
 # TESTS
@@ -23,14 +30,13 @@ find_package(GTest REQUIRED)
 include_directories(tests src ${GTEST_INCLUDE_DIRS})
 add_executable(gtest-search_server tests/gtest-search_server.cpp ${SRC})
 
-#- Run gtests using cmake tests
+#- Run gtests using cmake testing
 enable_testing()
 target_link_libraries(gtest-search_server GTest::Main ${GTEST_LIBRARIES})
 add_test(NAME search_server COMMAND gtest-search_server)
 
 
 #######################################
-# SRC
+# BENCHMARKS
 #######################################
-add_executable(main src/main.cpp ${SRC})
-
+add_executable(benchmark-search_server tests/benchmark-search_server.cpp ${SRC})
