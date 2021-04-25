@@ -1,10 +1,12 @@
+#include <execution>
 #include <iostream>
 #include <string>
 #include <vector>
 
+#include "document.h"
 #include "iostream_helpers.h"
 #include "log_duration.h"
-#include "remove_duplicates.h"
+#include "process_queries.h"
 #include "search_server.h"
 
 void AddDocuments(SearchServer& search_server) {
@@ -33,19 +35,31 @@ void AddDocuments(SearchServer& search_server) {
     search_server.AddDocument(9, "nasty rat with curly hair", DocumentStatus::ACTUAL, {3, 2});
 }
 
-
 int main() {
     using namespace std;
 
     SearchServer search_server("and with"s);
     AddDocuments(search_server);
 
-    cout << "Before duplicates removed: "
-         << search_server.GetDocumentCount() << endl;
+    const string query = "curly and funny -not";
 
-    RemoveDuplicates(search_server);
-    cout << "After duplicates removed: "
-         << search_server.GetDocumentCount() << endl;
+    {
+        const auto [words, status] = search_server.MatchDocument(query, 1);
+        cout << words.size() << " words for document 1" << endl;
+        // 1 words for document 1
+    }
+
+    {
+        const auto [words, status] = search_server.MatchDocument(execution::seq, query, 2);
+        cout << words.size() << " words for document 2" << endl;
+        // 2 words for document 2
+    }
+
+    {
+        const auto [words, status] = search_server.MatchDocument(execution::par, query, 8);
+        cout << words.size() << " words for document 8" << endl;
+        // 0 words for document 8
+    }
 
     return 0;
 }

@@ -25,6 +25,16 @@ public:
         out_ << "Documents matching for the query: " << query << std::endl;
     }
 
+    explicit LogDuration(std::string_view query) {
+        out_ << "Documents matching for the query: " << query << std::endl;
+    }
+
+    explicit LogDuration(std::string_view query, std::ostream& out)
+        : out_(out)
+    {
+        out_ << "Documents matching for the query: " << query << std::endl;
+    }
+
     ~LogDuration() {
         using namespace std::chrono;
         using namespace std::literals;

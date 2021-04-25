@@ -36,9 +36,8 @@ void PrintMatchDocumentResult(
               << "document_id = " << document_id << ", "
               << "status = " << static_cast<int>(status) << ", "
               << "words =";
-    for (const std::string& word : words) {
+    for (const std::string& word : words)
         std::cout << ' ' << word;
-    }
     std::cout << '}' << std::endl;
 }
 
@@ -80,9 +79,8 @@ std::ostream& operator<<(std::ostream& out,
 template <typename InputIt>
 std::ostream& operator<<(std::ostream& out,
                          const IteratorRange<InputIt> iterator_range) {
-    for (auto it = iterator_range.begin(); it != iterator_range.end(); ++it) {
+    for (auto it = iterator_range.begin(); it != iterator_range.end(); ++it)
         out << *it;
-    }
     return out;
 }
 
