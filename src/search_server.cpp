@@ -38,7 +38,7 @@ void SearchServer::AddDocument(
     UpdateInverseDocumentFreqs();
 }
 
-bool SearchServer::IsValidWord(const std::string& word) {
+bool SearchServer::IsValidWord(const std::string_view& word) {
     return std::none_of(word.begin(), word.end(), [](char c) {
         return c >= '\0' && c < ' ';
     });
@@ -66,7 +66,7 @@ int SearchServer::ComputeAverageRating(const std::vector<int>& ratings) {
     }
 }
 
-SearchServer::QueryWord SearchServer::ParseQueryWord(std::string word) const {
+SearchServer::QueryWord SearchServer::ParseQueryWord(std::string_view word) const {
     bool is_minus = (word[0] == '-');
     if (is_minus)
         word = word.substr(1);

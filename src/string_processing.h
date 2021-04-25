@@ -52,12 +52,14 @@ inline std::vector<std::string> SplitIntoWords(const std::string_view& text) {
     return SplitIntoWords(std::execution::seq, text);
 }
 
+std::vector<std::string_view> SplitIntoWordsView(std::string_view text);
+
 template <typename StringContainer>
-std::set<std::string> MakeUniqueNonEmptyWords(
+std::set<std::string, std::less<>> MakeUniqueNonEmptyWords(
     const StringContainer& words
 )
 {
-    std::set<std::string> non_empty_strings;
+    std::set<std::string, std::less<>> non_empty_strings;
     for (const auto& word : words) {
         if (!word.empty())
             non_empty_strings.insert(word);
