@@ -44,7 +44,7 @@ public:
 
     void AddDocument(
         int document_id,
-        const std::string& document,
+        const std::string_view& text,
         DocumentStatus status,
         const std::vector<int>& ratings
     );
@@ -93,7 +93,17 @@ public:
 
 private:
     struct DocumentData {
-        std::set<std::string> words;
+        DocumentData() = default;
+        explicit DocumentData(const std::vector<std::string>& words,
+                              DocumentStatus status,
+                              const std::vector<int>& ratings)
+            : unique_words({words.begin(), words.end()})
+            , status(status)
+            , rating(ComputeAverageRating(ratings))
+        {
+        }
+
+        std::set<std::string> unique_words;
         DocumentStatus status;
         int rating;
     };
@@ -132,7 +142,7 @@ private:
         return word_to_document_freqs_.at(word).count(document_id);
     }
 
-    std::vector<std::string> SplitIntoWordsNoStop(const std::string& text) const;
+    std::vector<std::string> SplitIntoWordsNoStop(const std::string_view& text) const;
 
     QueryWord ParseQueryWord(std::string word) const;
 
@@ -205,8 +215,8 @@ void SearchServer::RemoveDocument(
     if (documents_.count(document_id)) {
         std::for_each(
             execution_policy,
-            documents_.at(document_id).words.begin(),
-            documents_.at(document_id).words.end(),
+            documents_.at(document_id).unique_words.begin(),
+            documents_.at(document_id).unique_words.end(),
             [&, document_id](const std::string& word) {
                 word_to_document_freqs_.at(word).erase(document_id);
             }
@@ -280,7 +290,7 @@ void SearchServer::UpdateInverseDocumentFreqs(ExecutionPolicy&& excution_policy)
         documents_ids_.begin(),
         documents_ids_.end(),
         [&](const int documents_id){
-            for (const std::string& word : documents_.at(documents_id).words)
+            for (const std::string& word : documents_.at(documents_id).unique_words)
                 document_to_word_freqs_[documents_id][word] = ComputeWordInverseDocumentFreq(word);
         }
     );

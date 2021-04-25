@@ -11,7 +11,7 @@ const std::map<std::string, double>& SearchServer::GetWordFrequencies(
 
 void SearchServer::AddDocument(
     int document_id,
-    const std::string& document,
+    const std::string_view& text,
     DocumentStatus status,
     const std::vector<int>& ratings
 )
@@ -26,20 +26,13 @@ void SearchServer::AddDocument(
         );
 
     const std::vector<std::string> words = ThrowInvalidWords(
-        SplitIntoWordsNoStop(document)
+        SplitIntoWordsNoStop(text)
     );
     const double inv_word_count = 1.0/words.size();
     for (const std::string& word : words)
         word_to_document_freqs_[word][document_id] += inv_word_count;
 
-    documents_.emplace(
-        document_id,
-        DocumentData{
-            {words.begin(), words.end()},
-            status,
-            ComputeAverageRating(ratings)
-        }
-    );
+    documents_.emplace(document_id, DocumentData(words, status, ratings));
     documents_ids_.push_back(document_id);
 
     UpdateInverseDocumentFreqs();
@@ -52,14 +45,15 @@ bool SearchServer::IsValidWord(const std::string& word) {
 }
 
 std::vector<std::string> SearchServer::SplitIntoWordsNoStop(
-    const std::string& text
+    const std::string_view& text
 ) const
 {
     std::vector<std::string> words;
-    for (const std::string& word : SplitIntoWords(text))
+    for (const std::string_view& word_sv : SplitIntoWordsView(text)) {
+        const std::string word{word_sv};
         if (!IsStopWord(word))
             words.push_back(word);
-
+    }
     return words;
 }
 
