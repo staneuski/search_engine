@@ -46,7 +46,7 @@ public:
         return documents_.size();
     }
 
-    const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
+    const std::map<std::string_view, double>& GetWordFrequencies(int document_id) const;
 
     void AddDocument(
         int document_id,
@@ -125,7 +125,7 @@ private:
 
     const std::set<std::string, std::less<>> stop_words_ = {};
     std::map<std::string, std::map<int, double>, std::less<>> word_to_document_freqs_;
-    std::map<int, std::map<std::string, double>> document_to_word_freqs_;
+    std::map<int, std::map<std::string_view, double>> document_to_word_freqs_;
     std::map<int, DocumentData> documents_;
     std::vector<int> documents_ids_;
 

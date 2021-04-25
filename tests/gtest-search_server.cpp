@@ -190,7 +190,7 @@ TEST(SearchServer, GetWordFrequencies) {
     SearchServer search_server("fat"sv);
     AddDocuments(search_server);
 
-    std::vector<std::string> found_words;
+    std::vector<std::string_view> found_words;
     std::vector<double> found_freqs;
     for (const auto& [word, freq] : search_server.GetWordFrequencies(7)) {
         found_words.push_back(word);
@@ -199,7 +199,7 @@ TEST(SearchServer, GetWordFrequencies) {
 
     ASSERT_TRUE(search_server.GetWordFrequencies(1000).empty());
 
-    ASSERT_EQ(std::vector<std::string>({"long", "snake"}), found_words);
+    ASSERT_EQ(std::vector<std::string_view>({"long", "snake"}), found_words);
     ASSERT_EQ(
         std::vector<double>({2.6390573296152584, 1.9459101490553132}),
         found_freqs

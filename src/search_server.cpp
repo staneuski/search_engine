@@ -1,9 +1,9 @@
 #include "search_server.h"
 
-const std::map<std::string, double>& SearchServer::GetWordFrequencies(
+const std::map<std::string_view, double>& SearchServer::GetWordFrequencies(
     int document_id
 ) const {
-    const static std::map<std::string, double> document_to_empty_freqs;
+    const static std::map<std::string_view, double> document_to_empty_freqs;
     return document_to_word_freqs_.count(document_id)
            ? document_to_word_freqs_.at(document_id)
            : document_to_empty_freqs;
