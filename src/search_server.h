@@ -22,10 +22,23 @@ public:
     {
     }
 
+    explicit SearchServer(const std::string_view& stop_words_text)
+        : SearchServer(SplitIntoWords(stop_words_text))
+    {
+    }
+
     template <typename StringContainer>
     explicit SearchServer(const StringContainer& stop_words)
-        : stop_words_(ThrowInvalidWords(MakeUniqueNonEmptyStrings(stop_words)))
+        : stop_words_(ThrowInvalidWords(MakeUniqueNonEmptyWords(stop_words)))
     {
+
+        for (const auto& stop_word : stop_words)
+            std::cout << '[' << stop_word << ']';
+        std::cout << std::endl;
+
+        for (const auto& stop_word : stop_words_)
+            std::cout << '[' << stop_word << ']';
+        std::cout << std::endl;
     }
 
     inline auto begin() const noexcept {
@@ -176,6 +189,31 @@ private:
 };
 
 template<typename ExecutionPolicy>
+void SearchServer::RemoveDocument(
+    ExecutionPolicy&& execution_policy,
+    int document_id
+) {
+    if (documents_.count(document_id)) {
+        std::for_each(
+            execution_policy,
+            documents_.at(document_id).unique_words.begin(),
+            documents_.at(document_id).unique_words.end(),
+            [&, document_id](const std::string& word) {
+                word_to_document_freqs_.at(word).erase(document_id);
+            }
+        );
+
+        documents_.erase(document_id);
+        documents_ids_.erase(
+            remove(execution_policy, documents_ids_.begin(), documents_ids_.end(), document_id),
+            documents_ids_.end()
+        );
+
+        UpdateInverseDocumentFreqs();
+    }
+}
+
+template<typename ExecutionPolicy>
 std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument(
     ExecutionPolicy&& execution_policy,
     const std::string& raw_query,
@@ -204,32 +242,6 @@ std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument
         }
     }
     return {matched_words, documents_.at(document_id).status};
-}
-
-
-template<typename ExecutionPolicy>
-void SearchServer::RemoveDocument(
-    ExecutionPolicy&& execution_policy,
-    int document_id
-) {
-    if (documents_.count(document_id)) {
-        std::for_each(
-            execution_policy,
-            documents_.at(document_id).unique_words.begin(),
-            documents_.at(document_id).unique_words.end(),
-            [&, document_id](const std::string& word) {
-                word_to_document_freqs_.at(word).erase(document_id);
-            }
-        );
-
-        documents_.erase(document_id);
-        documents_ids_.erase(
-            remove(execution_policy, documents_ids_.begin(), documents_ids_.end(), document_id),
-            documents_ids_.end()
-        );
-
-        UpdateInverseDocumentFreqs();
-    }
 }
 
 template <typename DocumentPredicate>

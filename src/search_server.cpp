@@ -39,7 +39,7 @@ void SearchServer::AddDocument(
 }
 
 bool SearchServer::IsValidWord(const std::string& word) {
-    return none_of(word.begin(), word.end(), [](char c) {
+    return std::none_of(word.begin(), word.end(), [](char c) {
         return c >= '\0' && c < ' ';
     });
 }
@@ -49,11 +49,9 @@ std::vector<std::string> SearchServer::SplitIntoWordsNoStop(
 ) const
 {
     std::vector<std::string> words;
-    for (const std::string_view& word_sv : SplitIntoWordsView(text)) {
-        const std::string word{word_sv};
+    for (const std::string& word : SplitIntoWords(text))
         if (!IsStopWord(word))
             words.push_back(word);
-    }
     return words;
 }
 

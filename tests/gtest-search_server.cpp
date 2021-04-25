@@ -8,6 +8,7 @@
 #include "search_server.h"
 
 using namespace std::string_literals;
+using namespace std::string_view_literals;
 
 void AddDocuments(SearchServer& search_server) {
     search_server.AddDocument(1, "funny pet and nasty rat", DocumentStatus::ACTUAL, {7, 2, 7});
@@ -44,11 +45,11 @@ void AddDocuments(SearchServer& search_server) {
 /* ----------------------------- SearchServer ------------------------------ */
 
 TEST(SearchServer, SearchServer) {
-    SearchServer search_server("and with"s);
+    SearchServer search_server("and with"sv);
     AddDocuments(search_server);
 
     ASSERT_TRUE(search_server.FindTopDocuments("with").empty())
-        << "SetStopWords() must exclude stop words from a document content";
+        << "SearchServer() must exclude stop words from a document content";
 }
 
 TEST(SearchServer, AddDocument) {
@@ -186,7 +187,7 @@ TEST(SearchServer, TF_ITF) {
 }
 
 TEST(SearchServer, GetWordFrequencies) {
-    SearchServer search_server("fat"s);
+    SearchServer search_server("fat"sv);
     AddDocuments(search_server);
 
     std::vector<std::string> found_words;
@@ -208,7 +209,7 @@ TEST(SearchServer, GetWordFrequencies) {
 // /* ---------------------------- RemoveDuplicates --------------------------- */
 
 TEST(RemoveDuplicates, RemoveDuplicates) {
-    SearchServer search_server("and with"s);
+    SearchServer search_server("and with"sv);
     AddDocuments(search_server);
     RemoveDuplicates(search_server);
 

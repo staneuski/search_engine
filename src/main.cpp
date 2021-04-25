@@ -38,7 +38,7 @@ void AddDocuments(SearchServer& search_server) {
 int main() {
     using namespace std;
 
-    SearchServer search_server("and with"s);
+    SearchServer search_server("and with"sv);
     AddDocuments(search_server);
 
     const string query = "curly and funny -not";
