@@ -38,28 +38,12 @@ void AddDocuments(SearchServer& search_server) {
 int main() {
     using namespace std;
 
-    SearchServer search_server("and with"sv);
+    SearchServer search_server("and with"s);
     AddDocuments(search_server);
 
-    const string query = "curly and funny -not";
-
-    {
-        const auto [words, status] = search_server.MatchDocument(query, 1);
-        cout << words.size() << " words for document 1" << endl;
-        // 1 words for document 1
-    }
-
-    {
-        const auto [words, status] = search_server.MatchDocument(execution::seq, query, 2);
-        cout << words.size() << " words for document 2" << endl;
-        // 2 words for document 2
-    }
-
-    {
-        const auto [words, status] = search_server.MatchDocument(execution::par, query, 8);
-        cout << words.size() << " words for document 8" << endl;
-        // 0 words for document 8
-    }
+    cout << "ACTUAL by default:" << endl;
+    for (const Document& document : search_server.FindTopDocuments("curly nasty cat"s))
+       cout << document << endl;
 
     return 0;
 }
