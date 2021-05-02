@@ -25,7 +25,7 @@ std::vector<std::string> GenerateQueries(
 template <typename ExecutionPolicy>
 std::vector<std::string> SplitIntoWords(
     ExecutionPolicy&& execution_policy,
-    const std::string& text
+    const std::string_view& text
 )
 {
     std::vector<std::string> words{""};
@@ -48,19 +48,22 @@ std::vector<std::string> SplitIntoWords(
     return words;
 }
 
-inline std::vector<std::string> SplitIntoWords(const std::string& text) {
+inline std::vector<std::string> SplitIntoWords(const std::string_view& text) {
     return SplitIntoWords(std::execution::seq, text);
 }
 
+std::vector<std::string_view> SplitIntoWordsView(std::string_view text);
+
 template <typename StringContainer>
-std::set<std::string> MakeUniqueNonEmptyStrings(
-    const StringContainer& strings
+std::set<std::string, std::less<>> MakeUniqueNonEmptyWords(
+    const StringContainer& words
 )
 {
-    std::set<std::string> non_empty_strings;
-    for (const std::string& s : strings)
-        if (!s.empty())
-            non_empty_strings.insert(s);
+    std::set<std::string, std::less<>> non_empty_strings;
+    for (const auto& word : words) {
+        if (!word.empty())
+            non_empty_strings.insert(word);
+    }
 
     return non_empty_strings;
 }

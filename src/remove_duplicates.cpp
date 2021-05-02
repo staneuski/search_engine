@@ -18,7 +18,7 @@ void RemoveDuplicates(SearchServer& search_server) {
     std::vector<int> duplicate_ids;
 
     for (int outer_doc_id : search_server) {
-        const std::map<std::string, double>& word_to_freq = search_server.GetWordFrequencies(outer_doc_id);
+        const std::map<std::string_view, double>& word_to_freq = search_server.GetWordFrequencies(outer_doc_id);
 
         for (int inner_doc_id : search_server) {
             if (outer_doc_id == inner_doc_id

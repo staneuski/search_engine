@@ -1,9 +1,9 @@
 #include "search_server.h"
 
-const std::map<std::string, double>& SearchServer::GetWordFrequencies(
+const std::map<std::string_view, double>& SearchServer::GetWordFrequencies(
     int document_id
 ) const {
-    const static std::map<std::string, double> document_to_empty_freqs;
+    const static std::map<std::string_view, double> document_to_empty_freqs;
     return document_to_word_freqs_.count(document_id)
            ? document_to_word_freqs_.at(document_id)
            : document_to_empty_freqs;
@@ -11,7 +11,7 @@ const std::map<std::string, double>& SearchServer::GetWordFrequencies(
 
 void SearchServer::AddDocument(
     int document_id,
-    const std::string& document,
+    const std::string_view& text,
     DocumentStatus status,
     const std::vector<int>& ratings
 )
@@ -26,40 +26,32 @@ void SearchServer::AddDocument(
         );
 
     const std::vector<std::string> words = ThrowInvalidWords(
-        SplitIntoWordsNoStop(document)
+        SplitIntoWordsNoStop(text)
     );
     const double inv_word_count = 1.0/words.size();
     for (const std::string& word : words)
         word_to_document_freqs_[word][document_id] += inv_word_count;
 
-    documents_.emplace(
-        document_id,
-        DocumentData{
-            {words.begin(), words.end()},
-            status,
-            ComputeAverageRating(ratings)
-        }
-    );
+    documents_.emplace(document_id, DocumentData(words, status, ratings));
     documents_ids_.push_back(document_id);
 
     UpdateInverseDocumentFreqs();
 }
 
-bool SearchServer::IsValidWord(const std::string& word) {
-    return none_of(word.begin(), word.end(), [](char c) {
+bool SearchServer::IsValidWord(const std::string_view& word) {
+    return std::none_of(word.begin(), word.end(), [](char c) {
         return c >= '\0' && c < ' ';
     });
 }
 
 std::vector<std::string> SearchServer::SplitIntoWordsNoStop(
-    const std::string& text
+    const std::string_view& text
 ) const
 {
     std::vector<std::string> words;
     for (const std::string& word : SplitIntoWords(text))
         if (!IsStopWord(word))
             words.push_back(word);
-
     return words;
 }
 
@@ -74,7 +66,7 @@ int SearchServer::ComputeAverageRating(const std::vector<int>& ratings) {
     }
 }
 
-SearchServer::QueryWord SearchServer::ParseQueryWord(std::string word) const {
+SearchServer::QueryWord SearchServer::ParseQueryWord(std::string_view word) const {
     bool is_minus = (word[0] == '-');
     if (is_minus)
         word = word.substr(1);
