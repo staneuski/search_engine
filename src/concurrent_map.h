@@ -6,6 +6,8 @@
 
 using namespace std::string_literals;
 
+const size_t DEFAULT_SIZE = 50;
+
 template <typename Key, typename Value>
 class ConcurrentMap {
 public:
@@ -30,13 +32,21 @@ public:
         {
         }
 
+        operator Value&();
+
         std::lock_guard<std::mutex> lock;
         Value& ref_to_value;
     };
 
-    Access operator[](const Key& key) {
-        Bucket& bucket = buckets_[static_cast<uint64_t>(key) % buckets_.size()];
-        return Access(bucket, key);
+    inline Access operator[](const Key& key) {
+        return Access(GetBucket(key), key);
+    }
+
+    void erase(const Key& key) {
+        Bucket& bucket = GetBucket(key);
+
+        std::lock_guard<std::mutex> lock(bucket.m);
+        bucket.dict.erase(key);
     }
 
     std::map<Key, Value> BuildOrdinaryMap() {
@@ -49,5 +59,9 @@ public:
     }
 
 private:
-    std::vector<Bucket> buckets_{100};
+    std::vector<Bucket> buckets_{DEFAULT_SIZE};
+
+    inline Bucket& GetBucket(const Key& key) {
+        return buckets_[static_cast<uint64_t>(key) % buckets_.size()];
+    }
 };
