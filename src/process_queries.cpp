@@ -1,9 +1,4 @@
 #include "process_queries.h"
-#include <algorithm>
-#include <execution>
-#include <list>
-#include <string>
-#include <vector>
 
 std::vector<std::vector<Document>> ProcessQueries(
     const SearchServer& search_server,
