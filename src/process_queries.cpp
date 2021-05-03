@@ -18,7 +18,7 @@ std::vector<std::vector<Document>> ProcessQueries(
     return found_documents_by_queries;
 }
 
-std::list<Document> ProcessQueriesJoined(
+std::vector<Document> ProcessQueriesJoined(
     const SearchServer& search_server,
     const std::vector<std::string>& queries
 )
@@ -28,11 +28,12 @@ std::list<Document> ProcessQueriesJoined(
         queries
     );
 
-    std::list<Document> joined_documents_by_queries;
+    std::vector<Document> joined_documents_by_queries;
     for (const std::vector<Document>& found_documents : found_documents_by_queries)
-        joined_documents_by_queries.splice(
+        joined_documents_by_queries.insert(
             joined_documents_by_queries.end(),
-            std::list<Document>{found_documents.begin(), found_documents.end()}
+            found_documents.begin(),
+            found_documents.end()
         );
 
     return joined_documents_by_queries;

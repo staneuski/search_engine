@@ -1,7 +1,6 @@
 #pragma once
 #include <algorithm>
 #include <execution>
-#include <list>
 #include <string>
 #include <vector>
 
@@ -12,7 +11,7 @@ std::vector<std::vector<Document>> ProcessQueries(
     const std::vector<std::string>& queries
 );
 
-std::list<Document> ProcessQueriesJoined(
+std::vector<Document> ProcessQueriesJoined(
     const SearchServer& search_server,
     const std::vector<std::string>& queries
 );
