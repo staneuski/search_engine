@@ -92,7 +92,7 @@ double SearchServer::ComputeWordInverseDocumentFreq(
             : 0;
 }
 
-std::vector<Document> SearchServer::GetMatchedDocuments(
+std::vector<Document> SearchServer::ConvertToMatchedDocuments(
     std::map<int, double> document_to_relevance
 ) const
 {

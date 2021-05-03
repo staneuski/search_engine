@@ -68,7 +68,6 @@ public:
         RemoveDocument(std::execution::seq, document_id);
     }
 
-
     template <typename ExecutionPolicy>
     std::tuple<std::vector<std::string_view>, DocumentStatus> MatchDocument(
         ExecutionPolicy execution_policy,
@@ -92,26 +91,13 @@ public:
         ExecutionPolicy execution_policy,
         const std::string_view& raw_query,
         DocumentStatus status_to_find = DocumentStatus::ACTUAL
-    ) const
-    {
-        return FindTopDocuments(
-            execution_policy,
-            raw_query,
-            [status_to_find](__attribute__((unused)) int document_id,
-                            DocumentStatus status,
-                            __attribute__((unused)) int rating)
-            { return status == status_to_find; }
-        );
-    }
+    ) const;
 
     template <typename DocumentPredicate>
     inline std::vector<Document> FindTopDocuments(
         const std::string_view& raw_query,
         DocumentPredicate doc_predicate
-    ) const
-    {
-        return FindTopDocuments(std::execution::seq, raw_query, doc_predicate);
-    }
+    ) const;
 
     template <typename DocumentPredicate, typename ExecutionPolicy>
     std::vector<Document> FindTopDocuments(
@@ -185,7 +171,7 @@ private:
         UpdateInverseDocumentFreqs(std::execution::seq);
     }
 
-    std::vector<Document> GetMatchedDocuments(
+    std::vector<Document> ConvertToMatchedDocuments(
         std::map<int, double> document_to_relevance
     ) const;
 
@@ -203,8 +189,13 @@ private:
     template<typename ExecutionPolicy>
     void UpdateInverseDocumentFreqs(ExecutionPolicy execution_policy);
 
-    template <typename DocumentPredicate, typename ExecutionPolicy>
-    std::vector<Document> FindAllDocuments(ExecutionPolicy execution_policy,
+    template <typename DocumentPredicate>
+    std::vector<Document> FindAllDocuments(std::execution::sequenced_policy,
+                                           const Query& query,
+                                           DocumentPredicate predicate) const;
+
+    template <typename DocumentPredicate>
+    std::vector<Document> FindAllDocuments(std::execution::parallel_policy,
                                            const Query& query,
                                            DocumentPredicate predicate) const;
 
@@ -270,6 +261,32 @@ std::tuple<std::vector<std::string_view>, DocumentStatus> SearchServer::MatchDoc
         }
     }
     return {matched_words, documents_.at(document_id).status};
+}
+
+template <typename ExecutionPolicy>
+std::vector<Document> SearchServer::FindTopDocuments(
+    ExecutionPolicy execution_policy,
+    const std::string_view& raw_query,
+    DocumentStatus status_to_find
+) const
+{
+    return FindTopDocuments(
+        execution_policy,
+        raw_query,
+        [status_to_find](__attribute__((unused)) int document_id,
+                        DocumentStatus status,
+                        __attribute__((unused)) int rating)
+        { return status == status_to_find; }
+    );
+}
+
+template <typename DocumentPredicate>
+std::vector<Document> SearchServer::FindTopDocuments(
+    const std::string_view& raw_query,
+    DocumentPredicate doc_predicate
+) const
+{
+    return FindTopDocuments(std::execution::seq, raw_query, doc_predicate);
 }
 
 template <typename DocumentPredicate, typename ExecutionPolicy>
@@ -350,41 +367,38 @@ void SearchServer::UpdateInverseDocumentFreqs(ExecutionPolicy execution_policy) 
     );
 }
 
-template <typename DocumentPredicate, typename ExecutionPolicy>
+template <typename DocumentPredicate>
 std::vector<Document> SearchServer::FindAllDocuments(
-    ExecutionPolicy execution_policy,
+    std::execution::sequenced_policy,
     const Query& query,
     DocumentPredicate predicate
 ) const
 {
     std::map<int, double> document_to_relevance;
+    FindAllDocuments(std::execution::seq, query, predicate, document_to_relevance);
+    return ConvertToMatchedDocuments(document_to_relevance);
+}
 
-    if (std::is_same_v<ExecutionPolicy, std::execution::parallel_policy>) {
-        ConcurrentMap<int, double> concurrent_document_to_relevance;
-        FindAllDocuments(
-            execution_policy,
-            query,
-            predicate,
-            concurrent_document_to_relevance
-        );
-        document_to_relevance = concurrent_document_to_relevance.BuildOrdinaryMap();
-    } else {
-        FindAllDocuments(
-            execution_policy,
-            query,
-            predicate,
-            document_to_relevance
-        );
-    }
-
-    return GetMatchedDocuments(document_to_relevance);
+template <typename DocumentPredicate>
+std::vector<Document> SearchServer::FindAllDocuments(
+    std::execution::parallel_policy,
+    const Query& query,
+    DocumentPredicate predicate
+) const
+{
+    ConcurrentMap<int, double> document_to_relevance;
+    FindAllDocuments(std::execution::par, query, predicate, document_to_relevance);
+    return ConvertToMatchedDocuments(document_to_relevance.BuildOrdinaryMap());
 }
 
 template <typename ExecutionPolicy, typename DocumentPredicate, typename Container>
-void SearchServer::FindAllDocuments(ExecutionPolicy execution_policy,
-                                    const Query& query,
-                                    DocumentPredicate predicate,
-                                    Container& document_to_relevance) const {
+void SearchServer::FindAllDocuments(
+    ExecutionPolicy execution_policy,
+    const Query& query,
+    DocumentPredicate predicate,
+    Container& document_to_relevance
+) const
+{
     std::for_each(
         execution_policy,
         query.plus_words.begin(),
