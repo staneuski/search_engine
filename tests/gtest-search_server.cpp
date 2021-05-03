@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include "paginator.h"
+#include "process_queries.h"
 #include "remove_duplicates.h"
 #include "request_queue.h"
 #include "search_server.h"
@@ -206,7 +207,7 @@ TEST(SearchServer, GetWordFrequencies) {
     );
 }
 
-// /* ---------------------------- RemoveDuplicates --------------------------- */
+/* ---------------------------- RemoveDuplicates --------------------------- */
 
 TEST(RemoveDuplicates, RemoveDuplicates) {
     SearchServer search_server("and with"sv);
@@ -224,6 +225,59 @@ TEST(RemoveDuplicates, RemoveDuplicates) {
         << "Duplicated documents must be excluded from the search server";
 }
 
+
+/* ----------------------------- ProcessQueries ---------------------------- */
+
+TEST(ProcessQueries, ProcessQueries) {
+    SearchServer search_server("and with"sv);
+    AddDocuments(search_server);
+
+    const std::vector<std::string> queries = {
+        "nasty rat -not"s,
+        "not very funny nasty pet"s,
+        "curly hair"s
+    };
+
+    std::vector<std::vector<int>> query_no_to_found_document_ids;
+    query_no_to_found_document_ids.reserve(queries.size());
+    for (const std::vector<Document>& documents : ProcessQueries(search_server, queries)) {
+        std::vector<int> found_ids_by_query;
+        found_ids_by_query.reserve(documents.size());
+        for (const Document& document : documents) {
+            found_ids_by_query.push_back(document.id);
+        }
+        query_no_to_found_document_ids.push_back(found_ids_by_query);
+    }
+
+    ASSERT_EQ(
+        std::vector<std::vector<int>>({
+            {13, 10, 1, 14},
+            {12, 11, 10, 1, 2},
+            {2, 14, 8, 9}
+        }),
+        query_no_to_found_document_ids
+    );
+}
+
+TEST(ProcessQueries, ProcessQueriesJoined) {
+    SearchServer search_server("and with"sv);
+    AddDocuments(search_server);
+
+    const std::vector<std::string> queries = {
+        "nasty rat -not"s,
+        "not very funny nasty pet"s,
+        "curly hair"s
+    };
+
+    std::vector<int> found_ids_by_queries;
+    for (const Document& document : ProcessQueriesJoined(search_server, queries))
+        found_ids_by_queries.push_back(document.id);
+
+    ASSERT_EQ(
+        std::vector<int>({13, 10, 1, 14, 12, 11, 10, 1, 2, 2, 14, 8, 9}),
+        found_ids_by_queries
+    );
+}
 
 /* ------------------------------- Paginator ------------------------------- */
 
