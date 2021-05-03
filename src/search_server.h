@@ -68,15 +68,9 @@ public:
         RemoveDocument(std::execution::seq, document_id);
     }
 
-    template <typename ExecutionPolicy>
-    std::tuple<std::vector<std::string_view>, DocumentStatus> MatchDocument(
-        ExecutionPolicy execution_policy,
-        const std::string_view& raw_query,
-        int document_id
-    ) const;
+    void RemoveDocument(std::execution::sequenced_policy, int document_id);
 
-    template <typename ExecutionPolicy>
-    void RemoveDocument(ExecutionPolicy execution_policy, int document_id);
+    void RemoveDocument(std::execution::parallel_policy, int document_id);
 
     inline std::vector<Document> FindTopDocuments(
         const std::string_view& raw_query,
@@ -85,6 +79,13 @@ public:
     {
         return FindTopDocuments(std::execution::seq, raw_query, status_to_find);
     }
+
+    template <typename ExecutionPolicy>
+    std::tuple<std::vector<std::string_view>, DocumentStatus> MatchDocument(
+        ExecutionPolicy execution_policy,
+        const std::string_view& raw_query,
+        int document_id
+    ) const;
 
     template <typename ExecutionPolicy>
     inline std::vector<Document> FindTopDocuments(
@@ -205,32 +206,6 @@ private:
                           DocumentPredicate predicate,
                           Container& document_to_relevance) const;
 };
-
-template<typename ExecutionPolicy>
-void SearchServer::RemoveDocument(
-    ExecutionPolicy execution_policy,
-    int document_id
-)
-{
-    if (documents_.count(document_id)) {
-        std::for_each(
-            execution_policy,
-            documents_.at(document_id).unique_words.begin(),
-            documents_.at(document_id).unique_words.end(),
-            [&, document_id](const std::string& word) {
-                word_to_document_freqs_.at(word).erase(document_id);
-            }
-        );
-
-        documents_.erase(document_id);
-        documents_ids_.erase(
-            remove(execution_policy, documents_ids_.begin(), documents_ids_.end(), document_id),
-            documents_ids_.end()
-        );
-
-        UpdateInverseDocumentFreqs();
-    }
-}
 
 template<typename ExecutionPolicy>
 std::tuple<std::vector<std::string_view>, DocumentStatus> SearchServer::MatchDocument(
