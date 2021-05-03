@@ -71,13 +71,13 @@ public:
 
     template <typename ExecutionPolicy>
     std::tuple<std::vector<std::string_view>, DocumentStatus> MatchDocument(
-        ExecutionPolicy&& execution_policy,
+        ExecutionPolicy execution_policy,
         const std::string_view& raw_query,
         int document_id
     ) const;
 
     template <typename ExecutionPolicy>
-    void RemoveDocument(ExecutionPolicy&& execution_policy, int document_id);
+    void RemoveDocument(ExecutionPolicy execution_policy, int document_id);
 
     inline std::vector<Document> FindTopDocuments(
         const std::string_view& raw_query,
@@ -89,7 +89,7 @@ public:
 
     template <typename ExecutionPolicy>
     inline std::vector<Document> FindTopDocuments(
-        ExecutionPolicy&& execution_policy,
+        ExecutionPolicy execution_policy,
         const std::string_view& raw_query,
         DocumentStatus status_to_find = DocumentStatus::ACTUAL
     ) const
@@ -115,7 +115,7 @@ public:
 
     template <typename DocumentPredicate, typename ExecutionPolicy>
     std::vector<Document> FindTopDocuments(
-        ExecutionPolicy&& execution_policy,
+        ExecutionPolicy execution_policy,
         const std::string_view& raw_query,
         DocumentPredicate doc_predicate
     ) const;
@@ -186,7 +186,7 @@ private:
     }
 
     template<typename ExecutionPolicy>
-    Query ParseQuery(ExecutionPolicy&& execution_policy,
+    Query ParseQuery(ExecutionPolicy execution_policy,
                      const std::string_view& text) const;
 
     template <typename StringContainer>
@@ -197,15 +197,15 @@ private:
                                              WordPredicate word_predicate);
 
     template<typename ExecutionPolicy>
-    void UpdateInverseDocumentFreqs(ExecutionPolicy&& excution_policy);
+    void UpdateInverseDocumentFreqs(ExecutionPolicy execution_policy);
 
     template <typename DocumentPredicate, typename ExecutionPolicy>
-    std::vector<Document> FindAllDocuments(ExecutionPolicy&& excution_policy,
+    std::vector<Document> FindAllDocuments(ExecutionPolicy execution_policy,
                                            const Query& query,
                                            DocumentPredicate predicate) const;
 
     template <typename ExecutionPolicy, typename DocumentPredicate, typename Container>
-    void FindAllDocuments(ExecutionPolicy&& excution_policy,
+    void FindAllDocuments(ExecutionPolicy execution_policy,
                           const Query& query,
                           DocumentPredicate predicate,
                           Container& document_to_relevance) const;
@@ -213,9 +213,10 @@ private:
 
 template<typename ExecutionPolicy>
 void SearchServer::RemoveDocument(
-    ExecutionPolicy&& execution_policy,
+    ExecutionPolicy execution_policy,
     int document_id
-) {
+)
+{
     if (documents_.count(document_id)) {
         std::for_each(
             execution_policy,
@@ -238,7 +239,7 @@ void SearchServer::RemoveDocument(
 
 template<typename ExecutionPolicy>
 std::tuple<std::vector<std::string_view>, DocumentStatus> SearchServer::MatchDocument(
-    ExecutionPolicy&& execution_policy,
+    ExecutionPolicy execution_policy,
     const std::string_view& raw_query,
     int document_id
 ) const
@@ -269,7 +270,7 @@ std::tuple<std::vector<std::string_view>, DocumentStatus> SearchServer::MatchDoc
 
 template <typename DocumentPredicate, typename ExecutionPolicy>
 std::vector<Document> SearchServer::FindTopDocuments(
-    ExecutionPolicy&& execution_policy,
+    ExecutionPolicy execution_policy,
     const std::string_view& raw_query,
     DocumentPredicate doc_predicate
 ) const
@@ -293,7 +294,7 @@ std::vector<Document> SearchServer::FindTopDocuments(
 
 template<typename ExecutionPolicy>
 SearchServer::Query SearchServer::ParseQuery(
-    ExecutionPolicy&& execution_policy,
+    ExecutionPolicy execution_policy,
     const std::string_view& text
 ) const
 {
@@ -333,9 +334,9 @@ StringContainer SearchServer::ThrowInvalidWords(const StringContainer& words,
 }
 
 template<typename ExecutionPolicy>
-void SearchServer::UpdateInverseDocumentFreqs(ExecutionPolicy&& excution_policy) {
+void SearchServer::UpdateInverseDocumentFreqs(ExecutionPolicy execution_policy) {
     std::for_each(
-        excution_policy,
+        execution_policy,
         documents_ids_.begin(),
         documents_ids_.end(),
         [&](const int documents_id){
@@ -347,7 +348,7 @@ void SearchServer::UpdateInverseDocumentFreqs(ExecutionPolicy&& excution_policy)
 
 template <typename DocumentPredicate, typename ExecutionPolicy>
 std::vector<Document> SearchServer::FindAllDocuments(
-    ExecutionPolicy&& excution_policy,
+    ExecutionPolicy execution_policy,
     const Query& query,
     DocumentPredicate predicate
 ) const
@@ -357,7 +358,7 @@ std::vector<Document> SearchServer::FindAllDocuments(
     if (std::is_same_v<ExecutionPolicy, std::execution::parallel_policy>) {
         ConcurrentMap<int, double> concurrent_document_to_relevance;
         FindAllDocuments(
-            excution_policy, 
+            execution_policy, 
             query, 
             predicate, 
             concurrent_document_to_relevance
@@ -365,7 +366,7 @@ std::vector<Document> SearchServer::FindAllDocuments(
         document_to_relevance = concurrent_document_to_relevance.BuildOrdinaryMap();
     } else {
         FindAllDocuments(
-            excution_policy,
+            execution_policy,
             query,
             predicate,
             document_to_relevance
@@ -384,12 +385,12 @@ std::vector<Document> SearchServer::FindAllDocuments(
 }
 
 template <typename ExecutionPolicy, typename DocumentPredicate, typename Container>
-void SearchServer::FindAllDocuments(ExecutionPolicy&& excution_policy,
+void SearchServer::FindAllDocuments(ExecutionPolicy execution_policy,
                                     const Query& query,
                                     DocumentPredicate predicate,
                                     Container& document_to_relevance) const {
     std::for_each(
-        excution_policy,
+        execution_policy,
         query.plus_words.begin(),
         query.plus_words.end(),
         [this, &document_to_relevance, predicate](const std::string_view& word) {
@@ -407,7 +408,7 @@ void SearchServer::FindAllDocuments(ExecutionPolicy&& excution_policy,
     );
 
     std::for_each(
-        excution_policy,
+        execution_policy,
         query.minus_words.begin(),
         query.minus_words.end(),
         [this, &document_to_relevance, predicate](const std::string_view& word) {
