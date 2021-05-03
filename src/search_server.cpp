@@ -38,6 +38,49 @@ void SearchServer::AddDocument(
     UpdateInverseDocumentFreqs();
 }
 
+void SearchServer::RemoveDocument(std::execution::sequenced_policy,
+                                  int document_id) {
+    if (documents_.count(document_id)) {
+        for (const std::string& word : documents_.at(document_id).unique_words)
+            word_to_document_freqs_.at(word).erase(document_id);
+
+        documents_.erase(document_id);
+        documents_ids_.erase(
+            remove(documents_ids_.begin(), documents_ids_.end(), document_id),
+            documents_ids_.end()
+        );
+
+        UpdateInverseDocumentFreqs();
+    }
+}
+
+void SearchServer::RemoveDocument(std::execution::parallel_policy,
+                                  int document_id) {
+    if (documents_.count(document_id)) {
+        std::for_each(
+            std::execution::par,
+            documents_.at(document_id).unique_words.begin(),
+            documents_.at(document_id).unique_words.end(),
+            [&, document_id](const std::string& word) {
+                word_to_document_freqs_.at(word).erase(document_id);
+            }
+        );
+
+        documents_.erase(document_id);
+        documents_ids_.erase(
+            remove(
+                std::execution::par,
+                documents_ids_.begin(),
+                documents_ids_.end(),
+                document_id
+            ),
+            documents_ids_.end()
+        );
+
+        UpdateInverseDocumentFreqs();
+    }
+}
+
 bool SearchServer::IsValidWord(const std::string_view& word) {
     return std::none_of(word.begin(), word.end(), [](char c) {
         return c >= '\0' && c < ' ';
@@ -90,4 +133,18 @@ double SearchServer::ComputeWordInverseDocumentFreq(
     return (word_to_document_freqs_.at(word).size())
             ? log(static_cast<double>(GetDocumentCount())/word_to_document_freqs_.at(word).size())
             : 0;
+}
+
+std::vector<Document> SearchServer::ConvertToMatchedDocuments(
+    std::map<int, double> document_to_relevance
+) const
+{
+    std::vector<Document> matched_documents;
+    for (const auto& [document_id, relevance] : document_to_relevance)
+        matched_documents.push_back({
+            document_id,
+            relevance,
+            documents_.at(document_id).rating
+        });
+    return matched_documents;
 }
