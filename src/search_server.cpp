@@ -91,3 +91,17 @@ double SearchServer::ComputeWordInverseDocumentFreq(
             ? log(static_cast<double>(GetDocumentCount())/word_to_document_freqs_.at(word).size())
             : 0;
 }
+
+std::vector<Document> SearchServer::GetMatchedDocuments(
+    std::map<int, double> document_to_relevance
+) const
+{
+    std::vector<Document> matched_documents;
+    for (const auto& [document_id, relevance] : document_to_relevance)
+        matched_documents.push_back({
+            document_id,
+            relevance,
+            documents_.at(document_id).rating
+        });
+    return matched_documents;
+}

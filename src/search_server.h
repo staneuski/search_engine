@@ -185,6 +185,10 @@ private:
         UpdateInverseDocumentFreqs(std::execution::seq);
     }
 
+    std::vector<Document> GetMatchedDocuments(
+        std::map<int, double> document_to_relevance
+    ) const;
+
     template<typename ExecutionPolicy>
     Query ParseQuery(ExecutionPolicy execution_policy,
                      const std::string_view& text) const;
@@ -358,9 +362,9 @@ std::vector<Document> SearchServer::FindAllDocuments(
     if (std::is_same_v<ExecutionPolicy, std::execution::parallel_policy>) {
         ConcurrentMap<int, double> concurrent_document_to_relevance;
         FindAllDocuments(
-            execution_policy, 
-            query, 
-            predicate, 
+            execution_policy,
+            query,
+            predicate,
             concurrent_document_to_relevance
         );
         document_to_relevance = concurrent_document_to_relevance.BuildOrdinaryMap();
@@ -373,15 +377,7 @@ std::vector<Document> SearchServer::FindAllDocuments(
         );
     }
 
-    std::vector<Document> matched_documents;
-    for (const auto& [document_id, relevance] : document_to_relevance)
-        matched_documents.push_back({
-            document_id,
-            relevance,
-            documents_.at(document_id).rating
-        });
-
-    return matched_documents;
+    return GetMatchedDocuments(document_to_relevance);
 }
 
 template <typename ExecutionPolicy, typename DocumentPredicate, typename Container>
